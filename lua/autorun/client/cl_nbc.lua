@@ -23,14 +23,37 @@ local function NBC_Menu(CPanel)
 
 	timer.Create("NBC_LoadingMenu", 0.7, 1, function()
 		isMenuInitialized = true
- end)
+	end)
 
 	CPanel:AddControl("Header", {
-		Text = "NPC Battle Cleanup Options",
 		Description = "keep your free map of battle remains!"
 	})
 
+	local options = {
+		NBC_NPCCorpses = GetConVar("NBC_NPCCorpses"):GetString(),
+		NBC_NPCLeftovers = GetConVar("NBC_NPCLeftovers"):GetString(),
+		NBC_NPCWeapons = GetConVar("NBC_NPCWeapons"):GetString(),
+		NBC_NPCItems = GetConVar("NBC_NPCItems"):GetString(),
+		NBC_NPCDebris = GetConVar("NBC_NPCDebris"):GetString(),
+		NBC_PlyWeapons = GetConVar("NBC_PlyWeapons"):GetString(),
+		NBC_PlyItems = GetConVar("NBC_PlyItems"):GetString(),
+		NBC_Delay = GetConVar("NBC_Delay"):GetString(),
+		NBC_DelayScale = GetConVar("NBC_DelayScale"):GetString()
+	}
+    panel = CPanel:AddControl("ComboBox", {
+		MenuButton = "1",
+		Folder = "nbc",
+		Options = { ["#preset.default"] = { options } },
+		CVars = table.GetKeys(options)
+	})
+	panel.OnSelect = function(self, index, text, data)
+		for k,v in pairs(data) do
+			NBC_SendToServer(k, v);
+		end
+	end
+
 	local panel = CPanel:AddControl("Slider", {
+		Command = "NBC_Delay",
 		Label = "Cleanup Delay",
 		Type = "Float",
 		Min = "0.01",
@@ -40,6 +63,7 @@ local function NBC_Menu(CPanel)
 	panel:SetValue(GetConVar("NBC_Delay"):GetInt())
 
     panel = CPanel:AddControl("ComboBox", {
+		Command = "NBC_DelayScale",
 		Options = {
 			["Second(s)"] = {
 				scale = 1
@@ -56,31 +80,31 @@ local function NBC_Menu(CPanel)
 	CPanel:Help("")
 	CPanel:Help("Dead NPCs:")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Corpses" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Corpses", Command = "NBC_NPCCorpses" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCCorpses", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCCorpses"):GetInt())
 
 	CPanel:ControlHelp("Most of the bodies that fall on the ground.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Leftovers" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Leftovers", Command = "NBC_NPCLeftovers" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCLeftovers", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCLeftovers"):GetInt())
 
 	CPanel:ControlHelp("Differentiated entities, such as turned turrets, bodies with \"Keep corpses\" and some pieces that drop from the combine helicopter.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Weapons" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_NPCWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCWeapons", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCWeapons"):GetInt())
 
 	CPanel:ControlHelp("The weapons carried by the NPCs, if they're configured to fall.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Items" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_NPCItems" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCItems", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCItems"):GetInt())
 
 	CPanel:ControlHelp("Ammo, batteries and other items that the NPCs can drop.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Debris" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Debris", Command = "NBC_NPCDebris" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDebris", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCDebris"):GetInt())
 
@@ -89,13 +113,13 @@ local function NBC_Menu(CPanel)
 	CPanel:Help("")
 	CPanel:Help("Positioned by players:")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Weapons" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
 	panel:SetValue(GetConVar("NBC_PlyWeapons"):GetInt())
 
 	CPanel:ControlHelp("SWEPs")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Items" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_PlyItems" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyItems", bVal); end
 	panel:SetValue(GetConVar("NBC_PlyItems"):GetInt())
 
