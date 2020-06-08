@@ -1,5 +1,14 @@
-local gRagMax
-local waitingCorpsesCleanup = false
+local gRagMax -- Last registered g_ragdoll_maxcount 
+local lastCleanupDelay = {
+	waiting = false, -- Current for a cleanup order
+	value, -- Current delay
+	scale = {
+		1, -- Current scale
+		"", -- Corpses cleanup order timer name
+		"" -- Entities cleanup order timer name
+	}
+}
+-- Lists of entities to remove:
 local weapons = {
 	"weapon_",
 	"ai_weapon_"
@@ -41,6 +50,30 @@ net.Receive("NBC_UpdateCVar", function(_, ply)
 		RunConsoleCommand(command, value)
 	end
 end)
+
+-- React over delay changes (seconds and minutes) refresing the execution
+local function ProcessOlderCleanupOrders()
+	if lastCleanupDelay.scale[1] ~= GetConVar("NBC_DelayScale"):GetFloat() or
+	   lastCleanupDelay.value ~= GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat() then
+
+		-- Update the stored states
+		lastCleanupDelay.scale[1] = GetConVar("NBC_DelayScale"):GetFloat()
+		lastCleanupDelay.value = GetConVar("NBC_Delay"):GetFloat() * lastCleanupDelay.scale[1]
+
+		-- Open to a new cleanup order
+		if lastCleanupDelay.waiting then
+			lastCleanupDelay.waiting = false
+		end
+
+		-- Remove an older cleanup order if it exists
+		if timer.Exists(lastCleanupDelay.scale[2]) then
+			timer.Remove(lastCleanupDelay.scale[2])
+		end
+		if timer.Exists(lastCleanupDelay.scale[3]) then
+			timer.Remove(lastCleanupDelay.scale[3])
+		end
+	end
+end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
@@ -86,9 +119,20 @@ end
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
 	timer.Create(tostring(math.random(1, 9000000)) .. "r", 0.05, 1, function()
-		-- Remove selected stuff
+		-- Adjustments
+		ProcessOlderCleanupOrders()
+
+		-- New cleanup order to remove the selected entities
 		if #list > 0 then
-			timer.Create(tostring(math.random(1, 9000000)) .. "r2", fixedDelay and 2 or GetConVar("NBC_Delay"):GetFloat(), 1, function()
+			local name = tostring(math.random(1, 9000000)) .. "r2"
+			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
+
+			-- Store the current state
+			lastCleanupDelay.value = delay
+			lastCleanupDelay.scale[3] = name
+
+			-- Start
+			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
 					if IsValid(v) then
 						v:Remove()
@@ -102,21 +146,33 @@ end
 -- Remove NPC corpses
 local function RemoveCorpses(npc, noDelay)
 	local currentGRagMax =  GetConVar("g_ragdoll_maxcount"):GetInt()
-	
+
+	-- Keep the g_ragdoll_maxcount value safely stored
 	if currentGRagMax ~= 0 and gRagMax ~= currentGRagMax then
 		gRagMax = currentGRagMax
 	end
 
-	if not waitingCorpsesCleanup and currentGRagMax ~= 0 then
-		waitingCorpsesCleanup = true
+	-- Adjustments
+	ProcessOlderCleanupOrders()
 
-		timer.Create("AutoRemoveCorpses"..tostring(npc), noDelay and 0 or GetConVar("NBC_Delay"):GetFloat(), 1, function()
-			RunConsoleCommand("g_ragdoll_maxcount", 0) -- Corpses
+	-- New cleanup order to remove the corpses on the ground
+	if not lastCleanupDelay.waiting and currentGRagMax ~= 0 then
+		local name = "AutoRemoveCorpses"..tostring(npc)
+		local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
+		lastCleanupDelay.waiting = true
+
+		-- Store the current state
+		lastCleanupDelay.value = delay
+		lastCleanupDelay.scale[2] = name
+
+		-- Start
+		timer.Create(name, noDelay and 0 or delay, 1, function()
+			RunConsoleCommand("g_ragdoll_maxcount", 0)
 
 			timer.Create("AutoRemoveCorpses2"..tostring(npc), 0.5, 1, function()
 				RunConsoleCommand("g_ragdoll_maxcount", gRagMax)
 
-				waitingCorpsesCleanup = false
+				lastCleanupDelay.waiting = false
 			end)
 		end)
 	end
@@ -145,7 +201,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 		["npc_combinegunship"] = 35, -- Usually reports 32
 		["npc_helicopter"] = 13, -- Usually reports 3 to 7, but I already got 104...
 		["npc_combine_camera"] = 10 -- Usually reports 2 to 5, but I already got 50...
-		-- It's better to use this uncertain crap than to have nothing.
+		-- It's better to use this uncertain thing than to have nothing.
 	}
 
 	for k,v in pairs (detectDeath) do
@@ -188,9 +244,9 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	if GetConVar("NBC_NPCCorpses"):GetBool() then
 		-- Burning
 		if npc:IsOnFire() then
-			-- Note: I wasn't able to remove or extinguish the fire because the game functions
+			-- Note: I wasn't able to kill or extinguish the fire because the game functions
 			-- were buggy and closed as hell, so I just wait until the corpses finish burning
-			-- and restore their normal state.
+			-- because they restore their normal state and become removable.
 			timer.Create("rbc" .. tostring(npc), 7.5, 1, function()
 				RemoveCorpses("rbc", true)
 			end)
