@@ -31,7 +31,7 @@ local function NBC_Menu(Panel)
 	}
 	Panel:AddControl("Header", Params)
 
-	local Params = {
+	Params = {
 		Label = "Cleanup Delay",
 		Type = "Float",
 		Min = "0.01",
@@ -46,31 +46,31 @@ local function NBC_Menu(Panel)
 	Panel:Help("")
 	Panel:Help("Dead NPCs:")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Corpses" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Corpses" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCCorpses", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCCorpses"):GetInt())
 
-	Panel:ControlHelp("Most of the bodies that fall to the ground.")
+	Panel:ControlHelp("Most of the bodies that fall on the ground.")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Leftovers" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Leftovers" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCLeftovers", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCLeftovers"):GetInt())
 
-	Panel:ControlHelp("Differentiated bodies, such as turned turrets or the pieces that drop from the gunship.")
+	Panel:ControlHelp("Differentiated bodies, such as turned turrets or some pieces that drop from the combine helicopter.")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Weapons" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Weapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCWeapons", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCWeapons"):GetInt())
 
 	Panel:ControlHelp("The weapons the NPCs are carrying, if they're configured to fall.")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Items" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Items" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCItems", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCItems"):GetInt())
 
 	Panel:ControlHelp("Ammo, batteries and other items that the NPCs can drop.")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Debris" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Debris" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDebris", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCDebris"):GetInt())
 
@@ -79,13 +79,13 @@ local function NBC_Menu(Panel)
 	Panel:Help("")
 	Panel:Help("Positioned by players:")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Weapons" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Weapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
 	panel:SetValue(GetConVar("NBC_PlyWeapons"):GetInt())
 
 	Panel:ControlHelp("SWEPs")
 
-	local panel = Panel:AddControl( "CheckBox", { Label = "Items" } )
+	panel = Panel:AddControl( "CheckBox", { Label = "Items" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyItems", bVal); end
 	panel:SetValue(GetConVar("NBC_PlyItems"):GetInt())
 
