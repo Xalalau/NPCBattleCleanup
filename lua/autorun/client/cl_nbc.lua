@@ -51,10 +51,7 @@ local function NBC_Menu(CPanel)
 		Label = ""
 	})
 	panel.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data["scale"]); end
-
-	CPanel:Help("")
-
-	CPanel:ControlHelp("This delay is accommodated with the game's limitations, so it doesn't work on all removals.")
+	panel:ChooseOptionID(2)
 
 	CPanel:Help("")
 	CPanel:Help("Dead NPCs:")
@@ -69,13 +66,13 @@ local function NBC_Menu(CPanel)
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCLeftovers", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCLeftovers"):GetInt())
 
-	CPanel:ControlHelp("Differentiated bodies, such as turned turrets or some pieces that drop from the combine helicopter.")
+	CPanel:ControlHelp("Differentiated entities, such as turned turrets, bodies with \"Keep corpses\" and some pieces that drop from the combine helicopter.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCWeapons", bVal); end
 	panel:SetValue(GetConVar("NBC_NPCWeapons"):GetInt())
 
-	CPanel:ControlHelp("The weapons the NPCs are carrying, if they're configured to fall.")
+	CPanel:ControlHelp("The weapons carried by the NPCs, if they're configured to fall.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Items" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCItems", bVal); end
