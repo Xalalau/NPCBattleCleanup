@@ -134,7 +134,7 @@ local function RemoveEntities(list, fixedDelay)
 			-- Start
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) and v:Health() <= 0 then
+					if IsValid(v) and not v.doNotRemove and v:Health() <= 0 then
 						-- HACK: avoid deleting the tongue of alive barnacles
 						if v:GetClass() == "npc_barnacle_tongue_tip" then
 							for _,ent in pairs(list) do
@@ -234,7 +234,9 @@ end)
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	-- If the NPC got killed by a barnacle, so let it go the natural way
 	-- Note: removing the NPC at this point can lead to a crash
-	if attacker:GetClass() == "npc_barnacle" then
+	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
+		npc.doNotRemove = true
+
 		return
 	end
 
