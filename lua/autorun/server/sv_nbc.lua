@@ -103,7 +103,7 @@ local function GetFiltered(position, radius, classes, scanEverything)
 					if scanEverything or not (IsValid(v:GetOwner())) then
 						table.insert(list, v)
 					else
-						if v:GetOwner():GetNPCState() == 7 then
+						if v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
 							table.insert(list, v)
 						end
 					end
