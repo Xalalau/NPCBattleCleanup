@@ -232,6 +232,12 @@ end)
 
 -- NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
+	-- If the NPC got killed by a barnacle, so let it go the natural way
+	-- Note: removing the NPC at this point can lead to a crash
+	if attacker:GetClass() == "npc_barnacle" then
+		return
+	end
+
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
 		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons))
