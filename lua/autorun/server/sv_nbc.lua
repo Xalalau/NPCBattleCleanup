@@ -119,11 +119,11 @@ end
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
 	timer.Create(tostring(math.random(1, 9000000)) .. "r", 0.05, 1, function()
-		-- Adjustments
-		ProcessOlderCleanupOrders()
-
 		-- New cleanup order to remove the selected entities
 		if #list > 0 then
+			-- Adjustments
+			ProcessOlderCleanupOrders()
+
 			local name = tostring(math.random(1, 9000000)) .. "r2"
 			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
 
@@ -134,8 +134,20 @@ local function RemoveEntities(list, fixedDelay)
 			-- Start
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) then
-						v:Remove()
+					if IsValid(v) and v:Health() <= 0 then
+						-- HACK: avoid deleting the tongue of alive barnacles
+						if v:GetClass() == "npc_barnacle_tongue_tip" then
+							for _,ent in pairs(list) do
+								if ent:EntIndex() == v:EntIndex() - 1 then
+									if ent:Health() <= 0 then
+										v:Remove()
+									end
+								end
+							end
+						-- Delete the entity
+						else
+							v:Remove()
+						end
 					end
 				end
 			end)
