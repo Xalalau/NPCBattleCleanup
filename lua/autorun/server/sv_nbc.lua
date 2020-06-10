@@ -1,11 +1,11 @@
 local gRagMax -- Last registered g_ragdoll_maxcount 
 local lastCleanupDelay = {
-	waiting = false, -- Current for a cleanup order
+	waiting = false, -- If we're waiting for a cleanup order
 	value, -- Current delay
 	scale = {
 		1, -- Current scale
-		"", -- Corpses cleanup order timer name
-		"" -- Entities cleanup order timer name
+		"", -- Name of the corpses cleanup timer
+		"" -- Name of the entities cleanup timer
 	}
 }
 -- Lists of entities to remove:
@@ -21,13 +21,12 @@ local leftovers = {
 	"prop_ragdoll",
 	"npc_barnacle",
 	"npc_barnacle_tongue_tip",
-	"npc_turret_floor",
-	"floorturret_tipcontroller",
 	"npc_combinegunship",
 	"npc_combine_camera"
 }
 local debris = {
 	"gib",
+	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
 }
@@ -59,7 +58,7 @@ local function ProcessOlderCleanupOrders()
 		lastCleanupDelay.scale[1] = GetConVar("NBC_DelayScale"):GetFloat()
 		lastCleanupDelay.value = GetConVar("NBC_Delay"):GetFloat() * lastCleanupDelay.scale[1]
 
-		-- Open to a new cleanup order
+		-- Clear the waiting for a cleanup order
 		if lastCleanupDelay.waiting then
 			lastCleanupDelay.waiting = false
 		end
@@ -79,11 +78,11 @@ end
 local function GetFiltered(position, radius, classes, scanEverything)
 	local list = {}
 
-	timer.Create(tostring(math.random(1, 9000000)) .. "gwai", 0.001, 1, function()
+	timer.Create(tostring(math.random(1, 9000000)) .. "gf", 0.001, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
 			local validEntity = false
 
-			-- Filters
+			-- Validate the entity according to the "classes" argument
 			if not classes then
 				validEntity = true
 			else
@@ -96,12 +95,21 @@ local function GetFiltered(position, radius, classes, scanEverything)
 
 			-- It's a valid entity
 			if validEntity then
-				-- It's owned by a player. Skip it
-				if scanEverything or not (IsValid(v:GetOwner()) and v:GetOwner():IsPlayer()) then
-					-- It's an ownerless entity. Get it
+				-- The class is "prop_physics": get it if its creation time is almost instant
+				if v:GetClass() == "prop_physics" then
+					if math.floor(v:GetCreationTime()) == math.floor(CurTime()) then
+						table.insert(list, v)
+					end
+
+				-- It's another class:
+				-- It's owned by a player: skip it
+				elseif scanEverything or not (IsValid(v:GetOwner()) and v:GetOwner():IsPlayer()) then
+					-- It's not owned by a player:
+				
+					-- It's an ownerless entity: get it
 					if scanEverything or not (IsValid(v:GetOwner())) then
 						table.insert(list, v)
-					-- It's an entity owned by a NPC. Get if the owner is dead
+					-- It's an entity owned by a NPC: get it if the NPC is dead
 					elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
 						table.insert(list, v)
 					end
@@ -113,13 +121,13 @@ local function GetFiltered(position, radius, classes, scanEverything)
 	return list
 end
 
--- Remove entities from a given list
+-- Remove the entities from a given list
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
-	timer.Create(tostring(math.random(1, 9000000)) .. "r", 0.05, 1, function()
+	timer.Create(tostring(math.random(1, 9000000)) .. "re", 0.05, 1, function()
 		-- New cleanup order to remove the selected entities
 		if #list > 0 then
-			local name = tostring(math.random(1, 9000000)) .. "r2"
+			local name = tostring(math.random(1, 9000000)) .. "re2"
 			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
 
 			-- Adjustments
@@ -187,30 +195,29 @@ local function RemoveCorpses(identifier, noDelay)
 	end
 end
 
--- Player spawned a SENT
+-- Clean up player's spawned weapon
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
-	if not GetConVar("NBC_PlyItems"):GetBool() then return; end
-
-	RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items))
+	if GetConVar("NBC_PlyItems"):GetBool() then
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items))
+	end
 end)
 
--- Player spawned a SWEP
+-- Clean up player's spawned item
 hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
-	if not GetConVar("NBC_PlyWeapons"):GetBool() then return; end
-
-	RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons))
+	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons))
+	end
 end)
 
 -- HACK:
 -- NPC damaged
--- Used to detect when some NPCs are killed (not reported in "OnNPCKilled" hook)
+-- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	-- The NPCs here also die before their life gets to 0
+	-- The NPCs here also die before their life gets to 0:
 	local detectDeath = {
 		["npc_combinegunship"] = 35, -- Usually reports 32
-		["npc_helicopter"] = 13, -- Usually reports 3 to 7, but I already got 104...
-		["npc_combine_camera"] = 10 -- Usually reports 2 to 5, but I already got 50...
-		-- It's better to use this uncertain thing than to have nothing.
+		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
+		["npc_combine_camera"] = 10 -- Usually reports from 2 to 5, but I already got 50...
 	}
 
 	for k,v in pairs (detectDeath) do
@@ -230,8 +237,8 @@ end)
 
 -- NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-	-- If the NPC got killed by a barnacle, let it go "the natural way"
-	-- Note: removing the NPC at this point can lead to a crash.
+	-- HACK: If the NPC was killed by a barnacle, let it be eaten
+	-- Removing the entity in this situation can lead to a crash
 	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
 		npc.doNotRemove = true
 
@@ -263,10 +270,10 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		-- Burning
 		if npc:IsOnFire() then
 			-- Note: I wasn't able to kill or extinguish the fire because the game functions
-			-- were buggy and closed as hell, so I just wait until the corpses finish burning
+			-- were buggy and very closed, so I just wait until the corpses finish burning
 			-- because they restore their normal state and become removable.
 			timer.Create("onk" .. tostring(npc), 7.5, 1, function()
-				RemoveCorpses("onk", true) -- "onk" is passed because the npc is nil at this point
+				RemoveCorpses("onk", true) -- "onk" is passed because "npc" is nil at this point
 			end)
 		-- Normal
 		else
