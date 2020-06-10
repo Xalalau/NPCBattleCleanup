@@ -83,7 +83,7 @@ end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
-local function GetFiltered(position, radius, classes, scanEverything)
+local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
@@ -95,7 +95,9 @@ local function GetFiltered(position, radius, classes, scanEverything)
 				validEntity = true
 			else
 				for _, class in pairs(classes) do
-					if string.find(v:GetClass(), class) then
+					if matchClassExactly and v:GetClass() == class or
+					   not matchClassExactly and string.find(v:GetClass(), class) then
+
 						validEntity = true
 					end
 				end
@@ -186,14 +188,14 @@ end
 -- Clean up player's spawned weapon
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
 	if GetConVar("NBC_PlyItems"):GetBool() then
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items))
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
 	end
 end)
 
 -- Clean up player's spawned item
 hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
 	if GetConVar("NBC_PlyWeapons"):GetBool() then 
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons))
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
 	end
 end)
 
@@ -212,11 +214,11 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 		if npc:GetClass() == k then
 			if npc:Health() <= v then
 				if GetConVar("NBC_NPCLeftovers"):GetBool() then
-					RemoveEntities(GetFiltered(npc:GetPos(), 128, leftovers, true), true)
+					RemoveEntities(GetFiltered(npc:GetPos(), 128, leftovers, true, true), true)
 				end
 
 				if GetConVar("NBC_NPCDebris"):GetBool() then
-					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, true))
+					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, true, true))
 				end
 			end
 		end
@@ -235,17 +237,17 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons))
+		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons, false))
 	end
 
 	-- Clean up NPC's items
 	if GetConVar("NBC_NPCItems"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, items))
+		RemoveEntities(GetFiltered(npc:GetPos(), 128, items, false))
 	end
 
-	-- Clean up dead NPC's leftovers
+	
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
-		local list = GetFiltered(npc:GetPos(), 128, leftovers)
+		local list = GetFiltered(npc:GetPos(), 128, leftovers, true)
 
 		-- HACK: avoid deleting the tongue of alive barnacles
 		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
@@ -267,7 +269,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 
 	-- Clean up dead NPC's debris (little pieces)
 	if GetConVar("NBC_NPCDebris"):GetBool() then
-		local list = GetFiltered(npc:GetPos(), 128, debris, true)
+		local list = GetFiltered(npc:GetPos(), 128, debris, true, true)
 
 		-- HACK: validate any found "prop_physics"
 		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
