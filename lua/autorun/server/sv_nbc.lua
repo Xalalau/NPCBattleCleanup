@@ -245,17 +245,21 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		RemoveEntities(GetFiltered(npc:GetPos(), 128, items, false))
 	end
 
-	
+	-- Clean up dead NPC's leftovers
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), 128, leftovers, true)
 
-		-- HACK: avoid deleting the tongue of alive barnacles
+		-- HACK: deal with barnacles
 		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if v:GetClass() == "npc_barnacle_tongue_tip" then
-					for k2,v2 in pairs(list) do
+					for k2,v2 in pairs(ents.GetAll()) do
 						if v2:EntIndex() == v:EntIndex() - 1 then
-							if v2:Health() > 0 then
+							-- Avoid deleting an NPC that is being eaten by the barnacle
+							if v2:GetClass() == "npc_barnacle_tongue_tip" then
+								list[k].doNotRemove = true
+							-- Avoid deleting the tongue of alive barnacles
+							elseif v2:GetClass() == "npc_barnacle" and v2:Health() > 0 then
 								list[k].doNotRemove = true
 							end
 						end
