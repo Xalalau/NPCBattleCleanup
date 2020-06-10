@@ -94,17 +94,16 @@ local function GetFiltered(position, radius, classes, scanEverything)
 				end
 			end
 
-			-- Valid entity
+			-- It's a valid entity
 			if validEntity then
-				-- Don't get stuff from players
+				-- It's owned by a player. Skip it
 				if scanEverything or not (IsValid(v:GetOwner()) and v:GetOwner():IsPlayer()) then
-					-- Don't get stuff from alive NPCs
+					-- It's an ownerless entity. Get it
 					if scanEverything or not (IsValid(v:GetOwner())) then
 						table.insert(list, v)
-					else
-						if v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
-							table.insert(list, v)
-						end
+					-- It's an entity owned by a NPC. Get if the owner is dead
+					elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
+						table.insert(list, v)
 					end
 				end
 			end
@@ -120,11 +119,11 @@ local function RemoveEntities(list, fixedDelay)
 	timer.Create(tostring(math.random(1, 9000000)) .. "r", 0.05, 1, function()
 		-- New cleanup order to remove the selected entities
 		if #list > 0 then
-			-- Adjustments
-			ProcessOlderCleanupOrders()
-
 			local name = tostring(math.random(1, 9000000)) .. "r2"
 			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
+
+			-- Adjustments
+			ProcessOlderCleanupOrders()
 
 			-- Store the current state
 			lastCleanupDelay.value = delay
@@ -137,10 +136,8 @@ local function RemoveEntities(list, fixedDelay)
 						-- HACK: avoid deleting the tongue of alive barnacles
 						if v:GetClass() == "npc_barnacle_tongue_tip" then
 							for _,ent in pairs(list) do
-								if ent:EntIndex() == v:EntIndex() - 1 then
-									if ent:Health() <= 0 then
-										v:Remove()
-									end
+								if ent:EntIndex() == v:EntIndex() - 1 and ent:Health() <= 0 then
+									v:Remove()
 								end
 							end
 						-- Delete the entity
@@ -151,12 +148,13 @@ local function RemoveEntities(list, fixedDelay)
 				end
 			end)
 		end
-    end)
+	end)
 end
 
 -- Remove NPC corpses
-local function RemoveCorpses(npc, noDelay)
+local function RemoveCorpses(identifier, noDelay)
 	local currentGRagMax =  GetConVar("g_ragdoll_maxcount"):GetInt()
+	identifier = tostring(identifier)
 
 	-- Keep the g_ragdoll_maxcount value safely stored
 	if currentGRagMax ~= 0 and gRagMax ~= currentGRagMax then
@@ -168,7 +166,7 @@ local function RemoveCorpses(npc, noDelay)
 
 	-- New cleanup order to remove the corpses on the ground
 	if not lastCleanupDelay.waiting and currentGRagMax ~= 0 then
-		local name = "AutoRemoveCorpses"..tostring(npc)
+		local name = "AutoRemoveCorpses"..identifier
 		local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
 		lastCleanupDelay.waiting = true
 
@@ -180,7 +178,7 @@ local function RemoveCorpses(npc, noDelay)
 		timer.Create(name, noDelay and 0 or delay, 1, function()
 			RunConsoleCommand("g_ragdoll_maxcount", 0)
 
-			timer.Create("AutoRemoveCorpses2"..tostring(npc), 0.5, 1, function()
+			timer.Create("AutoRemoveCorpses2"..identifier, 0.5, 1, function()
 				RunConsoleCommand("g_ragdoll_maxcount", gRagMax)
 
 				lastCleanupDelay.waiting = false
@@ -221,6 +219,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 				if GetConVar("NBC_NPCLeftovers"):GetBool() then
 					RemoveEntities(GetFiltered(npc:GetPos(), 128, leftovers, true), true)
 				end
+
 				if GetConVar("NBC_NPCDebris"):GetBool() then
 					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, true))
 				end
@@ -231,8 +230,8 @@ end)
 
 -- NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-	-- If the NPC got killed by a barnacle, so let it go the natural way
-	-- Note: removing the NPC at this point can lead to a crash
+	-- If the NPC got killed by a barnacle, let it go "the natural way"
+	-- Note: removing the NPC at this point can lead to a crash.
 	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
 		npc.doNotRemove = true
 
@@ -266,8 +265,8 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 			-- Note: I wasn't able to kill or extinguish the fire because the game functions
 			-- were buggy and closed as hell, so I just wait until the corpses finish burning
 			-- because they restore their normal state and become removable.
-			timer.Create("rbc" .. tostring(npc), 7.5, 1, function()
-				RemoveCorpses("rbc", true)
+			timer.Create("onk" .. tostring(npc), 7.5, 1, function()
+				RemoveCorpses("onk", true) -- "onk" is passed because the npc is nil at this point
 			end)
 		-- Normal
 		else

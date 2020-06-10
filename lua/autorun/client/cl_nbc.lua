@@ -40,7 +40,7 @@ local function NBC_Menu(CPanel)
 		NBC_Delay = GetConVar("NBC_Delay"):GetString(),
 		NBC_DelayScale = GetConVar("NBC_DelayScale"):GetString()
 	}
-    panel = CPanel:AddControl("ComboBox", {
+	local panel = CPanel:AddControl("ComboBox", {
 		MenuButton = "1",
 		Folder = "nbc",
 		Options = { ["#preset.default"] = { options } },
@@ -52,7 +52,7 @@ local function NBC_Menu(CPanel)
 		end
 	end
 
-	local panel = CPanel:AddControl("Slider", {
+	panel = CPanel:AddControl("Slider", {
 		Command = "NBC_Delay",
 		Label = "Cleanup Delay",
 		Type = "Float",
@@ -62,7 +62,7 @@ local function NBC_Menu(CPanel)
 	panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val); end
 	panel:SetValue(GetConVar("NBC_Delay"):GetInt())
 
-    panel = CPanel:AddControl("ComboBox", {
+	panel = CPanel:AddControl("ComboBox", {
 		Command = "NBC_DelayScale",
 		Options = {
 			["Second(s)"] = {

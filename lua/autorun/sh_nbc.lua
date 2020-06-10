@@ -13,7 +13,7 @@ local cvars = {
 }
 
 for k,v in pairs(cvars) do
-	if !ConVarExists(k) then
+	if ! ConVarExists(k) then
 		CreateConVar(k, v)
 	end
 end
