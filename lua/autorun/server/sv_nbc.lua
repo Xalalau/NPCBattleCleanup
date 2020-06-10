@@ -20,6 +20,8 @@ local items = {
 local leftovers = {
 	"prop_ragdoll",
 	"npc_barnacle",
+	"npc_turret_floor",
+	"floorturret_tipcontroller",
 	"npc_barnacle_tongue_tip",
 	"npc_combinegunship",
 	"npc_combine_camera"
@@ -95,24 +97,14 @@ local function GetFiltered(position, radius, classes, scanEverything)
 
 			-- It's a valid entity
 			if validEntity then
-				-- The class is "prop_physics": get it if its creation time is almost instant
-				if v:GetClass() == "prop_physics" then
-					if math.floor(v:GetCreationTime()) == math.floor(CurTime()) then
-						table.insert(list, v)
-					end
-
-				-- It's another class:
+				-- It's ownerless: get it
+				if scanEverything or not IsValid(v:GetOwner()) then
+					table.insert(list, v)
 				-- It's owned by a player: skip it
-				elseif scanEverything or not (IsValid(v:GetOwner()) and v:GetOwner():IsPlayer()) then
-					-- It's not owned by a player:
-				
-					-- It's an ownerless entity: get it
-					if scanEverything or not (IsValid(v:GetOwner())) then
-						table.insert(list, v)
-					-- It's an entity owned by a NPC: get it if the NPC is dead
-					elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
-						table.insert(list, v)
-					end
+				elseif v:GetOwner():IsPlayer() then
+				-- It's owned by a NPC: get it if the NPC is dead
+				elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
+					table.insert(list, v)
 				end
 			end
 		end
@@ -262,7 +254,21 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 
 	-- Clean up dead NPC's debris (little pieces)
 	if GetConVar("NBC_NPCDebris"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, debris, true))
+		local list = GetFiltered(npc:GetPos(), 128, debris, true)
+
+		-- Validate any found "prop_physics"
+		timer.Create(tostring(npc) .. "onk", 0.05, 1, function()
+			for k,v in pairs(list) do
+				if v:GetClass() == "prop_physics" then
+					-- Its creation time must be almost instant
+					if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
+						table.remove(list, k)
+					end
+				end
+			end
+		end)
+
+		RemoveEntities(list)
 	end
 
 	-- Clean up corpses
