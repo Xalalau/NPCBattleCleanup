@@ -249,6 +249,11 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), 128, leftovers, true)
 
+		-- HACK: deal with turned turrets
+		if npc:GetClass() == "npc_turret_floor" then
+			npc:SetHealth(0)
+		end
+
 		-- HACK: deal with barnacles
 		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
