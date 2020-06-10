@@ -139,17 +139,7 @@ local function RemoveEntities(list, fixedDelay)
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
 					if IsValid(v) and not v.doNotRemove and v:Health() <= 0 then
-						-- HACK: avoid deleting the tongue of alive barnacles
-						if v:GetClass() == "npc_barnacle_tongue_tip" then
-							for _,ent in pairs(list) do
-								if ent:EntIndex() == v:EntIndex() - 1 and ent:Health() <= 0 then
-									v:Remove()
-								end
-							end
-						-- Delete the entity
-						else
-							v:Remove()
-						end
+						v:Remove()
 					end
 				end
 			end)
@@ -211,7 +201,7 @@ end)
 -- NPC damaged
 -- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	-- The NPCs here also die before their life gets to 0:
+	-- The NPCs here also die before their life go to 0:
 	local detectDeath = {
 		["npc_combinegunship"] = 35, -- Usually reports 32
 		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
@@ -236,7 +226,7 @@ end)
 -- NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	-- HACK: If the NPC was killed by a barnacle, let it be eaten
-	-- Removing the entity in this situation can lead to a crash
+	-- Removing the dead NPC in this situation can lead to a crash
 	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
 		npc.doNotRemove = true
 
@@ -255,15 +245,32 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 
 	-- Clean up dead NPC's leftovers
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, leftovers))
+		local list = GetFiltered(npc:GetPos(), 128, leftovers)
+
+		-- HACK: avoid deleting the tongue of alive barnacles
+		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
+			for k,v in pairs(list) do
+				if v:GetClass() == "npc_barnacle_tongue_tip" then
+					for k2,v2 in pairs(list) do
+						if v2:EntIndex() == v:EntIndex() - 1 then
+							if v2:Health() > 0 then
+								list[k].doNotRemove = true
+							end
+						end
+					end
+				end
+			end
+		end)
+
+		RemoveEntities(list)
 	end
 
 	-- Clean up dead NPC's debris (little pieces)
 	if GetConVar("NBC_NPCDebris"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), 128, debris, true)
 
-		-- Validate any found "prop_physics"
-		timer.Create(tostring(npc) .. "onk", staticDelays.waitForFilteredResults, 1, function()
+		-- HACK: validate any found "prop_physics"
+		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if v:GetClass() == "prop_physics" then
 					-- Its creation time must be almost instant
@@ -281,11 +288,11 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	if GetConVar("NBC_NPCCorpses"):GetBool() then
 		-- Burning
 		if npc:IsOnFire() then
-			-- Note: I wasn't able to kill or extinguish the fire because the game functions
-			-- were buggy and very closed, so I just wait until the corpses finish burning
-			-- because they restore their normal state and become removable.
-			timer.Create("onk" .. tostring(npc), staticDelays.waitBurningCorpse, 1, function()
-				RemoveCorpses("onk", true) -- "onk" is passed because "npc" is nil at this point
+			-- HACK: Since I wasn't able to extinguish the fire because the game functions
+			-- were buggy and very closed, I just wait until the corpses finish burning so
+			-- they restore their normal state and become removable.
+			timer.Create("onk_corpses" .. tostring(npc), staticDelays.waitBurningCorpse, 1, function()
+				RemoveCorpses("onk_corpses", true) -- "onk" is passed because "npc" is nil at this point
 			end)
 		-- Normal
 		else
