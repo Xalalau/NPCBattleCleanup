@@ -8,6 +8,12 @@ local lastCleanupDelay = {
 		"" -- Name of the entities cleanup timer
 	}
 }
+local staticDelays = {
+	waitForGameNewEntities = 0.001, -- The game needs some time to create new entities after a NPC dies
+	waitForFilteredResults = 0.05, -- Lower values can lead to us dealing with incomplete results from GetFiltered()
+	restoreGRagdollMaxcount = 0.4,
+	waitBurningCorpse = 7.5 -- Fixed value
+}
 -- Lists of entities to remove:
 local weapons = {
 	"weapon_",
@@ -80,7 +86,7 @@ end
 local function GetFiltered(position, radius, classes, scanEverything)
 	local list = {}
 
-	timer.Create(tostring(math.random(1, 9000000)) .. "gf", 0.001, 1, function()
+	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
 			local validEntity = false
 
@@ -116,7 +122,7 @@ end
 -- Remove the entities from a given list
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
-	timer.Create(tostring(math.random(1, 9000000)) .. "re", 0.05, 1, function()
+	timer.Create(tostring(math.random(1, 9000000)) .. "re", staticDelays.waitForFilteredResults, 1, function()
 		-- New cleanup order to remove the selected entities
 		if #list > 0 then
 			local name = tostring(math.random(1, 9000000)) .. "re2"
@@ -178,7 +184,7 @@ local function RemoveCorpses(identifier, noDelay)
 		timer.Create(name, noDelay and 0 or delay, 1, function()
 			RunConsoleCommand("g_ragdoll_maxcount", 0)
 
-			timer.Create("AutoRemoveCorpses2"..identifier, 0.5, 1, function()
+			timer.Create("AutoRemoveCorpses2"..identifier, staticDelays.restoreGRagdollMaxcount, 1, function()
 				RunConsoleCommand("g_ragdoll_maxcount", gRagMax)
 
 				lastCleanupDelay.waiting = false
@@ -257,7 +263,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		local list = GetFiltered(npc:GetPos(), 128, debris, true)
 
 		-- Validate any found "prop_physics"
-		timer.Create(tostring(npc) .. "onk", 0.05, 1, function()
+		timer.Create(tostring(npc) .. "onk", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if v:GetClass() == "prop_physics" then
 					-- Its creation time must be almost instant
@@ -278,7 +284,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 			-- Note: I wasn't able to kill or extinguish the fire because the game functions
 			-- were buggy and very closed, so I just wait until the corpses finish burning
 			-- because they restore their normal state and become removable.
-			timer.Create("onk" .. tostring(npc), 7.5, 1, function()
+			timer.Create("onk" .. tostring(npc), staticDelays.waitBurningCorpse, 1, function()
 				RemoveCorpses("onk", true) -- "onk" is passed because "npc" is nil at this point
 			end)
 		-- Normal
