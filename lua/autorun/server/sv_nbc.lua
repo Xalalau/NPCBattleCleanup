@@ -27,7 +27,6 @@ local leftovers = {
 	"npc_combine_camera"
 }
 local debris = {
-	"prop_physics",
 	"gib",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
