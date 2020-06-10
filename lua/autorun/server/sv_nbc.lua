@@ -202,8 +202,8 @@ end)
 -- HACK:
 -- NPC damaged
 -- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
+-- Note: when the NPCs below die in here their life is greater than 0, but on later frames it goes to 0 or lower
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	-- The NPCs here also die before their life go to 0:
 	local detectDeath = {
 		["npc_combinegunship"] = 35, -- Usually reports 32
 		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
