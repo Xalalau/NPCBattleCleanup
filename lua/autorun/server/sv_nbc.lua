@@ -210,7 +210,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 		["npc_combine_camera"] = 10 -- Usually reports from 2 to 5, but I already got 50...
 	}
 
-	for k,v in pairs (detectDeath) do
+	for k,v in pairs(detectDeath) do
 		if npc:GetClass() == k then
 			if npc:Health() <= v then
 				if GetConVar("NBC_NPCLeftovers"):GetBool() then
@@ -286,7 +286,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 				if v:GetClass() == "prop_physics" then
 					-- Its creation time must be almost instant
 					if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
-						table.remove(list, k)
+						list[k] = nil
 					end
 				end
 			end
