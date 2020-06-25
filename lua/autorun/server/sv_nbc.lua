@@ -17,7 +17,8 @@ local staticDelays = {
 -- Lists of entities to remove:
 local weapons = {
 	"weapon_",
-	"ai_weapon_"
+	"ai_weapon_",
+	"tfa_"
 }
 local items = {
 	"item_",
