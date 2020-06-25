@@ -17,8 +17,7 @@ local staticDelays = {
 -- Lists of entities to remove:
 local weapons = {
 	"weapon_",
-	"ai_weapon_",
-	"tfa_"
+	"ai_weapon_"
 }
 local items = {
 	"item_",
@@ -57,6 +56,15 @@ net.Receive("NBC_UpdateCVar", function(_, ply)
 		RunConsoleCommand(command, value)
 	end
 end)
+
+-- Detect if the entity is from TFA base
+local function IsTFABase(ent)
+	if ent.Base and ent.Base == "tfa_gun_base" and (ent:IsWeapon() or ent:IsScripted()) then
+		return true
+	end
+
+	return false
+end
 
 -- React over delay changes (seconds and minutes) refresing the execution
 local function ProcessOlderCleanupOrders()
@@ -97,7 +105,8 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 			else
 				for _, class in pairs(classes) do
 					if matchClassExactly and v:GetClass() == class or
-					   not matchClassExactly and string.find(v:GetClass(), class) then
+					   not matchClassExactly and string.find(v:GetClass(), class) or
+					   IsTFABase(v) then
 
 						validEntity = true
 					end
