@@ -116,7 +116,7 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 			-- It's a valid entity
 			if validEntity then
 				-- It's ownerless: get it
-				if scanEverything or not IsValid(v:GetOwner()) then
+				if not IsValid(v:GetOwner()) or scanEverything and not v:GetOwner():IsPlayer() then
 					table.insert(list, v)
 				-- It's owned by a player: skip it
 				elseif v:GetOwner():IsPlayer() then
