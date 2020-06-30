@@ -14,14 +14,25 @@ local staticDelays = {
 	restoreGRagdollMaxcount = 0.4,
 	waitBurningCorpse = 7.5 -- Fixed value
 }
--- Lists of entities to remove:
+
+-- Lists of entities to remove
+-- Note: the entities won't be removed if they aren't caught by these filters
+
 local weapons = {
 	"weapon_",
-	"ai_weapon_"
+	"ai_weapon_",
+	"tfa_",
+	"m9k_",
+	"cw_",
+	"arccw_"
 }
 local items = {
 	"item_",
-	"npc_grenade_"
+	"npc_grenade_",
+	"tfa_",
+	"m9k_",
+	"cw_",
+	"arccw_"
 }
 local leftovers = {
 	"prop_ragdoll",
@@ -37,6 +48,18 @@ local debris = {
 	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
+}
+local base = { -- For better detection, I also check the base of some entities
+	"tfa_gun_base", -- TFA
+	"arccw_base", -- ArcCW
+	"bobs_gun_base", -- M9K
+	"bobs_scoped_base", -- M9K
+	"bobs_shotty_base", -- M9K
+	"bobs_nade_base", -- M9K
+	"cw_base", -- CW2
+	"cw_grenade_base", -- CW2
+	"cw_attpack_base", -- CW2
+	"cw_ammo_ent_base" -- CW2
 }
 
 util.AddNetworkString("NBC_UpdateCVar")
@@ -57,10 +80,14 @@ net.Receive("NBC_UpdateCVar", function(_, ply)
 	end
 end)
 
--- Detect if the entity is from TFA base
-local function IsTFABase(ent)
-	if ent.Base and ent.Base == "tfa_gun_base" and (ent:IsWeapon() or ent:IsScripted()) then
-		return true
+-- Detect weapons and items from selected weapon bases
+local function IsValidBase(ent)
+	if ent.Base then
+		for k,v in pairs(base) do
+			if ent.Base == v and (ent:IsWeapon() or ent:IsScripted()) then
+				return true
+			end
+		end
 	end
 
 	return false
@@ -106,7 +133,7 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 				for _, class in pairs(classes) do
 					if matchClassExactly and v:GetClass() == class or
 					   not matchClassExactly and string.find(v:GetClass(), class) or
-					   IsTFABase(v) then
+					   IsValidBase(v) then
 
 						validEntity = true
 					end
