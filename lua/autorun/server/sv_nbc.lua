@@ -177,7 +177,7 @@ local function RemoveEntities(list, fixedDelay)
 			-- Start
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) and not v.doNotRemove and v:Health() <= 0 then
+					if IsValid(v) and not v.doNotRemove and (v:Health() <= 0 or (v:IsWeapon() or v:IsScripted())) then
 						v:Remove()
 					end
 				end
