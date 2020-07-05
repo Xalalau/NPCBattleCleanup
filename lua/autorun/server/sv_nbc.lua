@@ -26,7 +26,8 @@ local weapons = {
 	"tfa_",     -- TFA Base
 	"m9k_",     -- M9K Specialties
 	"cw_",      -- Customizable Weaponry 2.0
-	"arccw_"   -- Arctic's Customizable Weapons
+	"arccw_",   -- Arctic's Customizable Weapons
+	"vj_"       -- VJ Base
 }
 local items = {
 	-- Default:
@@ -36,7 +37,8 @@ local items = {
 	"tfa_",
 	"m9k_",
 	"cw_",
-	"arccw_"
+	"arccw_",
+	"vj_"
 }
 local leftovers = {
 	-- Default:
@@ -51,7 +53,8 @@ local leftovers = {
 	"tfa_",
 	"m9k_",
 	"cw_",
-	"arccw_"
+	"arccw_",
+	"vj_"
 }
 local debris = {
 	-- Default:
@@ -73,7 +76,13 @@ local base = {
 	"cw_base", -- CW2
 	"cw_grenade_base", -- CW2
 	"cw_attpack_base", -- CW2
-	"cw_ammo_ent_base" -- CW2
+	"cw_ammo_ent_base", -- CW2
+	"weapon_vj_base", -- VJ
+	"npc_vj_animal_base", -- VJ
+	"npc_vj_creature_base", -- VJ
+	"npc_vj_human_base", -- VJ
+	"npc_vj_tank_base", -- VJ
+	"npc_vj_tankg_base" -- VJ
 }
 
 util.AddNetworkString("NBC_UpdateCVar")
