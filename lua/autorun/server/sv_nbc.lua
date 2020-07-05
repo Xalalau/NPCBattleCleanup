@@ -294,7 +294,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		-- HACK: deal with barnacles
 		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
-				if v:GetClass() == "npc_barnacle_tongue_tip" then
+				if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
 					for k2,v2 in pairs(ents.GetAll()) do
 						if v2:EntIndex() == v:EntIndex() - 1 then
 							-- Avoid deleting an NPC that is being eaten by the barnacle
@@ -320,7 +320,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		-- HACK: validate any found "prop_physics"
 		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
-				if v:GetClass() == "prop_physics" then
+				if IsValid(v) and v:GetClass() == "prop_physics" then
 					-- Its creation time must be almost instant
 					if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
 						list[k] = nil
