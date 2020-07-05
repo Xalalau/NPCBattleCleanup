@@ -19,37 +19,51 @@ local staticDelays = {
 -- Note: the entities won't be removed if they aren't caught by these filters
 
 local weapons = {
+	-- Default:
 	"weapon_",
 	"ai_weapon_",
-	"tfa_",
-	"m9k_",
-	"cw_",
-	"arccw_"
+	-- Addons:
+	"tfa_",     -- TFA Base
+	"m9k_",     -- M9K Specialties
+	"cw_",      -- Customizable Weaponry 2.0
+	"arccw_"   -- Arctic's Customizable Weapons
 }
 local items = {
+	-- Default:
 	"item_",
 	"npc_grenade_",
+	-- Addons:
 	"tfa_",
 	"m9k_",
 	"cw_",
 	"arccw_"
 }
 local leftovers = {
+	-- Default:
 	"prop_ragdoll",
 	"npc_barnacle",
 	"npc_turret_floor",
 	"floorturret_tipcontroller",
 	"npc_barnacle_tongue_tip",
 	"npc_combinegunship",
-	"npc_combine_camera"
+	"npc_combine_camera",
+	-- Addons:
+	"tfa_",
+	"m9k_",
+	"cw_",
+	"arccw_"
 }
 local debris = {
+	-- Default:
 	"gib",
 	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
 }
-local base = { -- For better detection, I also check the base of some entities
+local base = {
+	-- Try to get the entity by Base name. It's common for several addons
+	-- to only be caught here, since they don't follow name patterns.
+	-- Addons:
 	"tfa_gun_base", -- TFA
 	"arccw_base", -- ArcCW
 	"bobs_gun_base", -- M9K
