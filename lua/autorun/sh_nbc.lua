@@ -14,6 +14,6 @@ local cvars = {
 
 for k,v in pairs(cvars) do
 	if ! ConVarExists(k) then
-		CreateConVar(k, v)
+		CreateConVar(k, v, { FCVAR_ARCHIVE })
 	end
 end
