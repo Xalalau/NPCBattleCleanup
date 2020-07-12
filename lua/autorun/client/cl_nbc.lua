@@ -58,7 +58,7 @@ local function NBC_Menu(CPanel)
 		Label = "Cleanup Delay",
 		Type = "Float",
 		Min = "0.01",
-		Max = "5"
+		Max = "60"
 	})
 	panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val); end
 	panel:SetValue(GetConVar("NBC_Delay"):GetInt())
