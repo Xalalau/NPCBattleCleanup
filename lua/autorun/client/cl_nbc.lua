@@ -12,10 +12,11 @@ end
 local function NBC_SendToServer_Slider(command, value)
 	if timer.Exists("NBC_SliderSend") then
 		timer.Destroy("NBC_SliderSend")
- end
+	end
+
 	timer.Create("NBC_SliderSend", 0.1, 1, function()
 		NBC_SendToServer(command, value)
- end)
+	end)
 end
 
 local function NBC_Menu(CPanel)
