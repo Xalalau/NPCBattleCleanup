@@ -31,20 +31,20 @@ local function NBC_Menu(CPanel)
 	})
 
 	local options = {
-		NBC_NPCCorpses = GetConVar("NBC_NPCCorpses"):GetString(),
-		NBC_NPCLeftovers = GetConVar("NBC_NPCLeftovers"):GetString(),
-		NBC_NPCWeapons = GetConVar("NBC_NPCWeapons"):GetString(),
-		NBC_NPCItems = GetConVar("NBC_NPCItems"):GetString(),
-		NBC_NPCDebris = GetConVar("NBC_NPCDebris"):GetString(),
-		NBC_PlyWeapons = GetConVar("NBC_PlyWeapons"):GetString(),
-		NBC_PlyItems = GetConVar("NBC_PlyItems"):GetString(),
-		NBC_Delay = GetConVar("NBC_Delay"):GetString(),
-		NBC_DelayScale = GetConVar("NBC_DelayScale"):GetString()
+		NBC_NPCCorpses = 1,
+		NBC_NPCLeftovers = 1,
+		NBC_NPCWeapons = 1,
+		NBC_NPCItems = 1,
+		NBC_NPCDebris = 1,
+		NBC_PlyWeapons = 0,
+		NBC_PlyItems = 0,
+		NBC_Delay = 2,
+		NBC_DelayScale = 1
 	}
 	local panel = CPanel:AddControl("ComboBox", {
 		MenuButton = "1",
 		Folder = "nbc",
-		Options = { ["#preset.default"] = { options } },
+		Options = { ["#preset.default"] = options },
 		CVars = table.GetKeys(options)
 	})
 	panel.OnSelect = function(self, index, text, data)
