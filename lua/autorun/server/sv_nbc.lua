@@ -200,11 +200,26 @@ local function RemoveEntities(list, fixedDelay)
 			lastCleanupDelay.value = delay
 			lastCleanupDelay.scale[3] = name
 
-			-- Start
+			-- Remove the entities with a 0.33s fading effect
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
 					if IsValid(v) and not v.doNotRemove then
-						v:Remove()
+						local hookName = tostring(v)
+						local maxTime = CurTime() + 0.33
+
+						v:SetRenderMode(RENDERMODE_TRANSALPHA)
+
+						hook.Add("Tick", hookName, function()
+							if CurTime() >= maxTime or not v:IsValid() then
+								if IsValid(v) then
+									v:Remove()
+								end
+
+								hook.Remove("Tick", hookName)
+							else
+								v:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())))
+							end
+						end)
 					end
 				end
 			end)
