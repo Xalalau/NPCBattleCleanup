@@ -107,7 +107,7 @@ end)
 local function IsValidBase(ent)
 	if ent.Base then
 		for k,v in pairs(base) do
-			if ent.Base == v and (ent:IsWeapon() or ent:IsScripted()) then
+			if ent.Base == v then
 				return true
 			end
 		end
@@ -149,21 +149,24 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
 			local validEntity = false
 
-			-- Validate the entity according to the "classes" argument
-			if not classes then
-				validEntity = true
-			else
-				for _, class in pairs(classes) do
-					if matchClassExactly and v:GetClass() == class or
-					   not matchClassExactly and string.find(v:GetClass(), class) or
-					   IsValidBase(v) then
+			-- Is it a dead NPC, a weapon or an item?
+			if v:Health() <= 0 or not v:IsNPC() and (v:IsWeapon() or v:IsScripted()) then
+				-- Is the class or the base valid?
+				if not classes then
+					validEntity = true
+				else
+					for _, class in pairs(classes) do
+						if matchClassExactly and v:GetClass() == class or
+						   not matchClassExactly and string.find(v:GetClass(), class) or
+						   IsValidBase(v) then
 
-						validEntity = true
+							validEntity = true
+						end
 					end
 				end
 			end
 
-			-- It's a valid entity
+			-- if it's a valid entity...
 			if validEntity then
 				-- It's ownerless: get it
 				if not IsValid(v:GetOwner()) or scanEverything and not v:GetOwner():IsPlayer() then
@@ -200,7 +203,7 @@ local function RemoveEntities(list, fixedDelay)
 			-- Start
 			timer.Create(name, fixedDelay and 2 or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) and not v.doNotRemove and (v:Health() <= 0 or (v:IsWeapon() or v:IsScripted())) then
+					if IsValid(v) and not v.doNotRemove then
 						v:Remove()
 					end
 				end
