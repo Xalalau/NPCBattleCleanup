@@ -18,7 +18,7 @@ local staticDelays = {
 -- Lists of entities to remove
 -- Note: the entities won't be removed if they aren't caught by these filters
 
-local weapons = {
+local weapons = { -- Search for substrings
 	-- Default:
 	"weapon_",
 	"ai_weapon_",
@@ -29,7 +29,7 @@ local weapons = {
 	"arccw_",   -- Arctic's Customizable Weapons
 	"vj_"       -- VJ Base
 }
-local items = {
+local items = { -- Search for substrings
 	-- Default:
 	"item_",
 	"npc_grenade_",
@@ -40,7 +40,7 @@ local items = {
 	"arccw_",
 	"vj_"
 }
-local leftovers = {
+local leftovers = { -- Search for perfect matches
 	-- Default:
 	"prop_ragdoll",
 	"npc_barnacle",
@@ -48,22 +48,17 @@ local leftovers = {
 	"floorturret_tipcontroller",
 	"npc_barnacle_tongue_tip",
 	"npc_combinegunship",
-	"npc_combine_camera",
-	-- Addons:
-	"tfa_",
-	"m9k_",
-	"cw_",
-	"arccw_",
-	"vj_"
+	"npc_combine_camera"
+
 }
-local debris = {
+local debris = { -- Search for perfect matches
 	-- Default:
 	"gib",
 	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
 }
-local base = {
+local base = { -- Search for perfect matches
 	-- Try to get the entity by Base name. It's common for several addons
 	-- to only be caught here, since they don't follow name patterns.
 	-- Addons:
@@ -147,27 +142,30 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
-			local validEntity = false
+			local isEntityValid = false
+			local isTypeValid = classes ~= weapons and classes ~= items or 
+								classes == weapons and v:IsWeapon() or
+								classes == items and not v:IsWeapon() and v:IsScripted()
 
 			-- Is it a dead NPC, a weapon or an item?
-			if v:Health() <= 0 or not v:IsNPC() and (v:IsWeapon() or v:IsScripted()) then
+			if v:Health() <= 0 and isTypeValid then
 				-- Is the class or the base valid?
 				if not classes then
-					validEntity = true
+					isEntityValid = true
 				else
 					for _, class in pairs(classes) do
 						if matchClassExactly and v:GetClass() == class or
 						   not matchClassExactly and string.find(v:GetClass(), class) or
 						   IsValidBase(v) then
 
-							validEntity = true
+							isEntityValid = true
 						end
 					end
 				end
 			end
 
 			-- if it's a valid entity...
-			if validEntity then
+			if isEntityValid then
 				-- It's ownerless: get it
 				if not IsValid(v:GetOwner()) or scanEverything and not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() then
 					table.insert(list, v)
