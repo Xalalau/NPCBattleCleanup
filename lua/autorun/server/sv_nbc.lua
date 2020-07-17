@@ -34,6 +34,8 @@ local weapons_base = { -- Search for perfect matches
 	-- Addons:
 	"tfa_gun_base", -- TFA
 	"arccw_base", -- ArcCW
+	"arccw_base_melee", -- ArcCW
+	"arccw_base_nade", -- ArcCW
 	"bobs_gun_base", -- M9K
 	"bobs_scoped_base", -- M9K
 	"bobs_shotty_base", -- M9K
@@ -51,6 +53,7 @@ local items = { -- Search for substrings
 }
 local items_base = { -- Search for perfect matches
 	-- Addons:
+	"arccw_att_base", -- ArcCW
 	"cw_attpack_base", -- CW2
 	"cw_ammo_ent_base" -- CW2
 }
