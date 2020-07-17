@@ -29,6 +29,22 @@ local weapons = { -- Search for substrings
 	"arccw_",   -- Arctic's Customizable Weapons
 	"vj_"       -- VJ Base
 }
+local weapons_base = { -- Search for perfect matches
+	-- Try to get the entity by Base name. It's common for several addons
+	-- to only be caught here, since they don't follow name patterns.
+	-- Addons:
+	"tfa_gun_base", -- TFA
+	"arccw_base", -- ArcCW
+	"bobs_gun_base", -- M9K
+	"bobs_scoped_base", -- M9K
+	"bobs_shotty_base", -- M9K
+	"bobs_nade_base", -- M9K
+	"cw_base", -- CW2
+	"cw_grenade_base", -- CW2
+	"cw_attpack_base", -- CW2
+	"cw_ammo_ent_base", -- CW2
+	"weapon_vj_base" -- VJ
+}
 local items = { -- Search for substrings
 	-- Default:
 	"item_",
@@ -47,33 +63,22 @@ local leftovers = { -- Search for perfect matches
 	"npc_combine_camera"
 
 }
+local leftovers_base = { -- Search for perfect matches
+	-- Try to get the entity by Base name. It's common for several addons
+	-- to only be caught here, since they don't follow name patterns.
+	-- Addons:
+	"npc_vj_animal_base", -- VJ
+	"npc_vj_creature_base", -- VJ
+	"npc_vj_human_base", -- VJ
+	"npc_vj_tank_base", -- VJ
+	"npc_vj_tankg_base" -- VJ
+}
 local debris = { -- Search for substrings
 	-- Default:
 	"gib",
 	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
-}
-local base = { -- Search for perfect matches
-	-- Try to get the entity by Base name. It's common for several addons
-	-- to only be caught here, since they don't follow name patterns.
-	-- Addons:
-	"tfa_gun_base", -- TFA
-	"arccw_base", -- ArcCW
-	"bobs_gun_base", -- M9K
-	"bobs_scoped_base", -- M9K
-	"bobs_shotty_base", -- M9K
-	"bobs_nade_base", -- M9K
-	"cw_base", -- CW2
-	"cw_grenade_base", -- CW2
-	"cw_attpack_base", -- CW2
-	"cw_ammo_ent_base", -- CW2
-	"weapon_vj_base", -- VJ
-	"npc_vj_animal_base", -- VJ
-	"npc_vj_creature_base", -- VJ
-	"npc_vj_human_base", -- VJ
-	"npc_vj_tank_base", -- VJ
-	"npc_vj_tankg_base" -- VJ
 }
 
 util.AddNetworkString("NBC_UpdateCVar")
@@ -95,7 +100,7 @@ net.Receive("NBC_UpdateCVar", function(_, ply)
 end)
 
 -- Detect weapons and items from selected weapon bases
-local function IsValidBase(ent)
+local function IsValidBase(base, ent)
 	if ent.Base then
 		for k,v in pairs(base) do
 			if ent.Base == v then
@@ -135,6 +140,7 @@ end
 -- No classes = return every entity inside the radius
 local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
+	local base = classes == weapons and weapons_base or classes == leftovers and leftovers_base
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
@@ -154,7 +160,7 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 					for _, class in pairs(classes) do
 						if matchClassExactly and v:GetClass() == class or
 						   not matchClassExactly and string.find(v:GetClass(), class) or
-						   IsValidBase(v) then
+						   base and IsValidBase(base, v) then
 
 							isEntityValid = true
 						end
