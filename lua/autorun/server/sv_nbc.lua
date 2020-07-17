@@ -17,6 +17,7 @@ local staticDelays = {
 
 -- Lists of entities to remove
 -- Note: the entities won't be removed if they aren't caught by these filters
+-- Note2: I also try to get entities by Base because it's common for several addons to don't follow name patterns
 
 local weapons = { -- Search for substrings
 	-- Default:
@@ -30,8 +31,6 @@ local weapons = { -- Search for substrings
 	"vj_"       -- VJ Base
 }
 local weapons_base = { -- Search for perfect matches
-	-- Try to get the entity by Base name. It's common for several addons
-	-- to only be caught here, since they don't follow name patterns.
 	-- Addons:
 	"tfa_gun_base", -- TFA
 	"arccw_base", -- ArcCW
@@ -41,8 +40,6 @@ local weapons_base = { -- Search for perfect matches
 	"bobs_nade_base", -- M9K
 	"cw_base", -- CW2
 	"cw_grenade_base", -- CW2
-	"cw_attpack_base", -- CW2
-	"cw_ammo_ent_base", -- CW2
 	"weapon_vj_base" -- VJ
 }
 local items = { -- Search for substrings
@@ -50,7 +47,12 @@ local items = { -- Search for substrings
 	"item_",
 	"npc_grenade_",
 	-- Addons:
-	"vj_"
+	"vj_" -- VJ
+}
+local items_base = { -- Search for perfect matches
+	-- Addons:
+	"cw_attpack_base", -- CW2
+	"cw_ammo_ent_base" -- CW2
 }
 local leftovers = { -- Search for perfect matches
 	-- Default:
@@ -64,8 +66,6 @@ local leftovers = { -- Search for perfect matches
 
 }
 local leftovers_base = { -- Search for perfect matches
-	-- Try to get the entity by Base name. It's common for several addons
-	-- to only be caught here, since they don't follow name patterns.
 	-- Addons:
 	"npc_vj_animal_base", -- VJ
 	"npc_vj_creature_base", -- VJ
@@ -140,7 +140,9 @@ end
 -- No classes = return every entity inside the radius
 local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
-	local base = classes == weapons and weapons_base or classes == leftovers and leftovers_base
+	local base = classes == items and items_base or 
+				classes == weapons and weapons_base or
+				classes == leftovers and leftovers_base
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
