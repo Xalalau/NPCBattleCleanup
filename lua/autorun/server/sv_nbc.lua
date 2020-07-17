@@ -214,7 +214,7 @@ local function RemoveEntities(list, fixedDelay)
 						local hookName = tostring(v)
 						local maxTime = CurTime() + 0.33
 
-						v:SetRenderMode(RENDERMODE_TRANSALPHA)
+						v:SetRenderMode(RENDERMODE_TRANSCOLOR)
 
 						hook.Add("Tick", hookName, function()
 							if CurTime() >= maxTime or not v:IsValid() then
