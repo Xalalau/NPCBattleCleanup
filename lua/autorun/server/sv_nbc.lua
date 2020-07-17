@@ -33,11 +33,6 @@ local items = { -- Search for substrings
 	-- Default:
 	"item_",
 	"npc_grenade_",
-	-- Addons:
-	"tfa_",
-	"m9k_",
-	"cw_",
-	"arccw_",
 	"vj_"
 }
 local leftovers = { -- Search for perfect matches
@@ -51,7 +46,7 @@ local leftovers = { -- Search for perfect matches
 	"npc_combine_camera"
 
 }
-local debris = { -- Search for perfect matches
+local debris = { -- Search for substrings
 	-- Default:
 	"gib",
 	"prop_physics",
@@ -145,7 +140,9 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
 								classes == weapons and v:IsWeapon() or
-								classes == items and not v:IsWeapon() and v:IsScripted()
+								classes == items and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
+											not v:IsNPC() and not v:IsRagdoll() and not v:IsNextBot() and
+											not v:IsVehicle() and not v:IsWidget()
 
 			-- Is it a dead NPC, a weapon or an item?
 			if v:Health() <= 0 and isTypeValid then
@@ -294,7 +291,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 				end
 
 				if GetConVar("NBC_NPCDebris"):GetBool() then
-					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, true, true))
+					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, false, true))
 				end
 			end
 		end
@@ -354,7 +351,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 
 	-- Clean up dead NPC's debris (little pieces)
 	if GetConVar("NBC_NPCDebris"):GetBool() then
-		local list = GetFiltered(npc:GetPos(), 128, debris, true, true)
+		local list = GetFiltered(npc:GetPos(), 128, debris, false, true)
 
 		-- HACK: validate any found "prop_physics"
 		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
