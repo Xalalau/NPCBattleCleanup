@@ -10,7 +10,7 @@ local lastCleanupDelay = {
 }
 local staticDelays = {
 	waitForGameNewEntities = 0.05, -- The game needs some time to create new entities after a NPC dies
-	waitForFilteredResults = 0.6, -- Lower values can lead to us dealing with incomplete results from GetFiltered()
+	waitForFilteredResults = 0.09, -- Lower values can lead to us dealing with incomplete results from GetFiltered()
 	restoreGRagdollMaxcount = 0.4,
 	waitBurningCorpse = 7.5 -- Fixed value
 }
@@ -33,6 +33,7 @@ local items = { -- Search for substrings
 	-- Default:
 	"item_",
 	"npc_grenade_",
+	-- Addons:
 	"vj_"
 }
 local leftovers = { -- Search for perfect matches
