@@ -1,4 +1,5 @@
 local gRagMax -- Last registered g_ragdoll_maxcount 
+
 local lastCleanupDelay = {
 	waiting = false, -- If we're waiting for a cleanup order
 	value, -- Current delay
@@ -8,11 +9,29 @@ local lastCleanupDelay = {
 		"" -- Name of the entities cleanup timer
 	}
 }
+
+local lastFadingDelay
+
 local staticDelays = {
 	waitForGameNewEntities = 0.05, -- The game needs some time to create new entities after a NPC dies
 	waitForFilteredResults = 0.09, -- Lower values can lead to us dealing with incomplete results from GetFiltered()
 	restoreGRagdollMaxcount = 0.4,
-	waitBurningCorpse = 7.5 -- Fixed value
+	waitBurningCorpse = 7.5, -- Fixed value
+	fading = {
+		-- The max fading effect delay is unlimited for sents but only 2.8s for corpses
+		["fast"] = {
+			delay = 0.005,
+			g_ragdoll_fadespeed = 3000
+		},
+		["normal"] = {
+			delay = 0.6,
+			g_ragdoll_fadespeed = 600
+		},
+		["slow"] = {
+			delay = 4,
+			g_ragdoll_fadespeed = 1 
+		}
+	}
 }
 
 -- Lists of entities to remove
@@ -115,8 +134,14 @@ local function IsValidBase(base, ent)
 	return false
 end
 
--- React over delay changes (seconds and minutes) refresing the execution
+-- React over delay changes (seconds and minutes) refreshing the execution
 local function ProcessOlderCleanupOrders()
+	if lastFadingDelay ~= staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay then
+		lastFadingDelay = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+	
+		RunConsoleCommand("g_ragdoll_fadespeed", staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].g_ragdoll_fadespeed)
+	end
+
 	if lastCleanupDelay.scale[1] ~= GetConVar("NBC_DelayScale"):GetFloat() or
 	   lastCleanupDelay.value ~= GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat() then
 
@@ -212,7 +237,8 @@ local function RemoveEntities(list, fixedDelay)
 				for k,v in pairs(list) do
 					if IsValid(v) and not v.doNotRemove then
 						local hookName = tostring(v)
-						local maxTime = CurTime() + 0.33
+						local fadingTime = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+						local maxTime = CurTime() + fadingTime
 
 						v:SetRenderMode(RENDERMODE_TRANSCOLOR)
 
@@ -224,7 +250,7 @@ local function RemoveEntities(list, fixedDelay)
 
 								hook.Remove("Tick", hookName)
 							else
-								v:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())))
+								v:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())/fadingTime))
 							end
 						end)
 					end

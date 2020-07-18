@@ -8,6 +8,8 @@ local cvars = {
 	["NBC_PlyWeapons"] = 0,
 	["NBC_PlyItems"] = 0,
 
+	["NBC_FadingTime"] = "normal",
+
 	["NBC_Delay"] = 2,
 	["NBC_DelayScale"] = 1
 }

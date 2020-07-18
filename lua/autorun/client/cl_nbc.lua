@@ -38,6 +38,7 @@ local function NBC_Menu(CPanel)
 		NBC_NPCDebris = 1,
 		NBC_PlyWeapons = 0,
 		NBC_PlyItems = 0,
+		NBC_FadingTime = "normal",
 		NBC_Delay = 2,
 		NBC_DelayScale = 1
 	}
@@ -52,6 +53,8 @@ local function NBC_Menu(CPanel)
 			NBC_SendToServer(k, v);
 		end
 	end
+
+	CPanel:Help("")
 
 	panel = CPanel:AddControl("Slider", {
 		Command = "NBC_Delay",
@@ -76,6 +79,20 @@ local function NBC_Menu(CPanel)
 		Label = ""
 	})
 	panel.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data["scale"]); end
+	panel:ChooseOptionID(2)
+
+	CPanel:Help("")
+
+	panel = CPanel:AddControl("ComboBox", {
+		Command = "NBC_FadingTime",
+		Options = {
+			["fast"] = {},
+			["normal"] = {},
+			["slow"] = {}
+		},
+		Label = "Fading Speed"
+	})
+	panel.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_FadingTime", text); end
 	panel:ChooseOptionID(2)
 
 	CPanel:Help("")
