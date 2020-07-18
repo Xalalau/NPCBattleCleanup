@@ -22,7 +22,7 @@ end
 local function NBC_Menu(CPanel)
 	CPanel:ClearControls()
 	
-	local delayComboBox, fadingComboBox
+	local panel, options, delayComboBox, fadingComboBox
 
 	timer.Create("NBC_LoadingMenu", 0.7, 1, function()
 		isMenuInitialized = true
@@ -32,7 +32,7 @@ local function NBC_Menu(CPanel)
 		Description = "keep your free map of battle remains!"
 	})
 
-	local options = {
+	options = {
 		NBC_NPCCorpses = 1,
 		NBC_NPCLeftovers = 1,
 		NBC_NPCWeapons = 1,
@@ -40,11 +40,11 @@ local function NBC_Menu(CPanel)
 		NBC_NPCDebris = 1,
 		NBC_PlyWeapons = 0,
 		NBC_PlyItems = 0,
-		NBC_FadingTime = "normal",
+		NBC_FadingTime = "Normal",
 		NBC_Delay = 2,
 		NBC_DelayScale = 1
 	}
-	local panel = CPanel:AddControl("ComboBox", {
+	panel = CPanel:AddControl("ComboBox", {
 		MenuButton = "1",
 		Folder = "nbc",
 		Options = { ["#preset.default"] = options },
@@ -55,7 +55,7 @@ local function NBC_Menu(CPanel)
 			NBC_SendToServer(k, v);
 		end
 
-		delayComboBox:SetText((data["NBC_DelayScale"] == "1" or data["nbc_delayscale"] == 1) and "second(s)" or "minute(s)")
+		delayComboBox:SetText((data["NBC_DelayScale"] == "1" or data["nbc_delayscale"] == 1) and "Second(s)" or "Minute(s)")
 		
 		if data["NBC_FadingTime"] or data["nbc_fadingtime"] then -- Avoid script errors with the older addon versions
 			fadingComboBox:SetText(data["NBC_FadingTime"] or data["nbc_fadingtime"])
@@ -74,34 +74,48 @@ local function NBC_Menu(CPanel)
 	panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val); end
 	panel:SetValue(GetConVar("NBC_Delay"):GetInt())
 
+	options = {
+		["Second(s)"] = {
+			scale = 1,
+			selected = true,
+			icon = "icon16/time.png"
+		},
+		["Minute(s)"] = {
+			scale = 60,
+			icon = "icon16/time_add.png"
+		}
+	}
 	delayComboBox = CPanel:AddControl("ComboBox", {
 		Command = "NBC_DelayScale",
-		Options = {
-			["Second(s)"] = {
-				scale = 1
-			},
-			["Minute(s)"] = {
-				scale = 60
-			}
-		},
 		Label = ""
 	})
-	delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data["scale"]); end
-	delayComboBox:ChooseOptionID(2)
+	delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data); end
+	for k,v in pairs(options) do
+		delayComboBox:AddChoice(k, v.scale, v.selected or false, v.icon)
+	end
 
 	CPanel:Help("")
 
+	options = {
+		["Fast"] = {
+			icon = "icon16/control_end_blue.png"
+		},
+		["Normal"] = {
+			selected = true,
+			icon = "icon16/control_fastforward_blue.png"
+		},
+		["Slow"] = {
+			icon = "icon16/control_play_blue.png"
+		}
+	}
 	fadingComboBox = CPanel:AddControl("ComboBox", {
 		Command = "NBC_FadingTime",
-		Options = {
-			["fast"] = {},
-			["normal"] = {},
-			["slow"] = {}
-		},
 		Label = "Fading Speed"
 	})
 	fadingComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_FadingTime", text); end
-	fadingComboBox:ChooseOptionID(2)
+	for k,v in pairs(options) do
+		fadingComboBox:AddChoice(k, "", v.selected or false, v.icon)
+	end
 
 	CPanel:Help("")
 	CPanel:Help("Dead NPCs:")

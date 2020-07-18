@@ -19,15 +19,15 @@ local staticDelays = {
 	waitBurningCorpse = 7.5, -- Fixed value
 	fading = {
 		-- The max fading effect delay is unlimited for sents but only 2.8s for corpses
-		["fast"] = {
+		["Fast"] = {
 			delay = 0.005,
 			g_ragdoll_fadespeed = 3000
 		},
-		["normal"] = {
+		["Normal"] = {
 			delay = 0.6,
 			g_ragdoll_fadespeed = 600
 		},
-		["slow"] = {
+		["Slow"] = {
 			delay = 4,
 			g_ragdoll_fadespeed = 1 
 		}
