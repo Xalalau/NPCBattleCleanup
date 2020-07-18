@@ -85,7 +85,6 @@ local leftovers = { -- Search for perfect matches
 	"npc_barnacle_tongue_tip",
 	"npc_combinegunship",
 	"npc_combine_camera"
-
 }
 local leftovers_base = { -- Search for perfect matches
 	-- Addons:
@@ -217,6 +216,7 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 end
 
 -- Remove the entities from a given list
+-- Note: using a fixedDelay will force the fadingTime to 0.6s
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
 	timer.Create(tostring(math.random(1, 9000000)) .. "re", staticDelays.waitForFilteredResults, 1, function()
@@ -233,12 +233,13 @@ local function RemoveEntities(list, fixedDelay)
 			lastCleanupDelay.scale[3] = name
 
 			-- Remove the entities with a 0.33s fading effect
-			timer.Create(name, fixedDelay and 2 or delay, 1, function()
+			timer.Create(name, fixedDelay or delay, 1, function()
 				for k,v in pairs(list) do
 					if IsValid(v) and not v.doNotRemove then
 						local hookName = tostring(v)
-						local fadingTime = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+						local fadingTime = fixedDelay and 0.6 or staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 						local maxTime = CurTime() + fadingTime
+
 
 						v:SetRenderMode(RENDERMODE_TRANSCOLOR)
 
@@ -310,34 +311,8 @@ hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
 	end
 end)
 
--- HACK:
--- NPC damaged
--- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
--- Note: when the NPCs below die in here their life is greater than 0, but on later frames it goes to 0 or lower
-hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	local detectDeath = {
-		["npc_combinegunship"] = 35, -- Usually reports 32
-		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
-		["npc_combine_camera"] = 10 -- Usually reports from 2 to 5, but I already got 50...
-	}
-
-	for k,v in pairs(detectDeath) do
-		if npc:GetClass() == k then
-			if npc:Health() <= v then
-				if GetConVar("NBC_NPCLeftovers"):GetBool() then
-					RemoveEntities(GetFiltered(npc:GetPos(), 128, leftovers, true, true), true)
-				end
-
-				if GetConVar("NBC_NPCDebris"):GetBool() then
-					RemoveEntities(GetFiltered(npc:GetPos(), 256, debris, false, true))
-				end
-			end
-		end
-	end
-end)
-
 -- NPC killed
-hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
+local function DeathEvent(npc) 
 	-- HACK: If the NPC was killed by a barnacle, let it be eaten
 	-- Removing the dead NPC in this situation can lead to a crash
 	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
@@ -366,7 +341,7 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		end
 
 		-- HACK: deal with barnacles
-		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
+		timer.Create(tostring(npc) .. "onk_left", extraDelay or staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
 					for k2,v2 in pairs(ents.GetAll()) do
@@ -384,7 +359,9 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 			end
 		end)
 
-		RemoveEntities(list)
+		-- HACK: the npc_combinegunship explodes around 3.2s, making it very difficult to detect its pieces
+		-- My solution is to use a constant remotion time in this case and ensure that the cleaning always works
+		RemoveEntities(list, npc:GetClass() == "npc_combinegunship" and 2 or false)
 	end
 
 	-- Clean up dead NPC's debris (little pieces)
@@ -419,6 +396,31 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 		-- Normal
 		else
 			RemoveCorpses(npc)
+		end
+	end
+end
+
+-- NPC killed
+hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
+	DeathEvent(npc) 
+end)
+
+-- HACK:
+-- NPC damaged
+-- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
+-- Note: when the NPCs below die in here their life is greater than 0, but on later frames it goes to 0 or lower
+hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
+	local detectDeath = {
+		["npc_combinegunship"] = 35, -- Usually reports 32
+		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
+		["npc_combine_camera"] = 10 -- Usually reports from 2 to 5, but I already got 50...
+	}
+
+	for k,v in pairs(detectDeath) do
+		if npc:GetClass() == k then
+			if npc:Health() <= v then
+				DeathEvent(npc)
+			end
 		end
 	end
 end)
