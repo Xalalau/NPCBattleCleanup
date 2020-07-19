@@ -173,7 +173,7 @@ end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
--- radios = -1 will force the filter to check the hole map
+-- radius = -1 will force the filter to check the hole map
 local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
 	local base = classes == items and items_base or 
