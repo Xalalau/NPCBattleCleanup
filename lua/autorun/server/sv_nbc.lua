@@ -34,6 +34,14 @@ local staticDelays = {
 	}
 }
 
+-- Workaround to detected NPC deaths that aren't reported in the "OnNPCKilled" hook
+local deathsDetectedByDamage = { -- Search for perfect matches
+	-- Default:
+	"npc_combinegunship",
+	"npc_helicopter",
+	"npc_combine_camera"
+}
+
 -- Lists of entities to remove
 -- Note: the entities won't be removed if they aren't caught by these filters
 -- Note2: I also try to get entities by Base because it's common for several addons to don't follow name patterns
@@ -407,20 +415,16 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 end)
 
 -- HACK: NPC damaged
--- It's used to try to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
--- The NPCs listed below die with their life greater than 0 here, but on later frames it goes to 0 or lower
+-- Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	local detectDeath = {
-		["npc_combinegunship"] = 35, -- Usually reports 32
-		["npc_helicopter"] = 13, -- Usually reports from 3 to 7, but I already got 104...
-		["npc_combine_camera"] = 10 -- Usually reports from 2 to 5, but I already got 50...
-	}
-
-	for k,v in pairs(detectDeath) do
-		if npc:GetClass() == k then
-			if npc:Health() <= v then
-				DeathEvent(npc)
-			end
+	-- The damage is added to the health in a later frame
+	for k,v in pairs(deathsDetectedByDamage) do
+		if npc:GetClass() == v then
+			timer.Create("snd" .. tostring(npc), 0.001, 1, function()
+				if npc:Health() <= 0 then
+					DeathEvent(npc)
+				end
+			end)
 		end
 	end
 end)
