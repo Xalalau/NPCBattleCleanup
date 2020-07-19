@@ -1,3 +1,10 @@
+-- Networking
+
+util.AddNetworkString("NBC_UpdateFadingTime")
+util.AddNetworkString("NBC_UpdateCVar")
+
+-- Vars
+
 local gRagMax -- Last registered g_ragdoll_maxcount 
 
 local lastCleanupDelay = {
@@ -110,7 +117,12 @@ local debris = { -- Search for substrings
 	"helicopter_chunk"
 }
 
-util.AddNetworkString("NBC_UpdateCVar")
+-- Update fading time on new players
+hook.Add("PlayerInitialSpawn", "NBC_Initialize", function(ply)
+	net.Start("NBC_UpdateFadingTime")
+		net.WriteString(tostring(staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].g_ragdoll_fadespeed))
+	net.Send(ply)
+end)
 
 -- Receive convar update
 net.Receive("NBC_UpdateCVar", function(_, ply)
@@ -145,8 +157,10 @@ end
 local function ProcessOlderCleanupOrders()
 	if lastFadingDelay ~= staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay then
 	   lastFadingDelay = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
-	
-		RunConsoleCommand("g_ragdoll_fadespeed", staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].g_ragdoll_fadespeed)
+
+		net.Start("NBC_UpdateFadingTime")
+			net.WriteString(tostring(staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].g_ragdoll_fadespeed))
+		net.Broadcast()
 	end
 
 	if lastCleanupDelay.scale[1] ~= GetConVar("NBC_DelayScale"):GetFloat() or

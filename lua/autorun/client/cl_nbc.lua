@@ -1,5 +1,10 @@
 local isMenuInitialized = false
 
+-- Update ragdoll fading speed/time
+net.Receive("NBC_UpdateFadingTime", function()
+	RunConsoleCommand("g_ragdoll_fadespeed", net.ReadString())
+end)
+
 -- Run commands os the server
 local function NBC_SendToServer(command, value)
 	if not isMenuInitialized then return; end
