@@ -173,6 +173,7 @@ end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
+-- radios = -1 will force the filter to check the hole map
 local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
 	local base = classes == items and items_base or 
@@ -180,7 +181,9 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 	             classes == leftovers and leftovers_base
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
-		for k,v in pairs (ents.FindInSphere(position, radius)) do
+		local foundEntities = radius == -1 and ents.GetAll() or ents.FindInSphere(position, radius)
+	
+		for k,v in pairs (foundEntities) do
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
 			                    classes == weapons and v:IsWeapon() or
@@ -319,7 +322,7 @@ hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
 end)
 
 -- Process killed NPCs
--- Note: after adding .doNotRemove to an entity this addon will not delete it
+-- Note: after adding .doNotRemove to an entity the addon will not delete it
 local function DeathEvent(npc) 
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
@@ -376,7 +379,10 @@ local function DeathEvent(npc)
 
 	-- Clean up dead NPC's debris
 	if GetConVar("NBC_NPCDebris"):GetBool() then
-		local list = GetFiltered(npc:GetPos(), 128, debris, false, true)
+		-- Deal with combibe helicopters: they drop debris long before they die all over the map
+		local radius = npc:GetClass() == "npc_helicopter" and -1 or 128
+
+		local list = GetFiltered(npc:GetPos(), radius, debris, false, true)
 
 		-- Deal with "prop_physics": their creation time must be almost instant
 		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
