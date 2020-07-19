@@ -414,12 +414,12 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	DeathEvent(npc) 
 end)
 
--- HACK: NPC damaged
--- Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
+-- NPC damaged
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
-	-- The damage is added to the health in a later frame
+	-- HACK: Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
 	for k,v in pairs(deathsDetectedByDamage) do
 		if npc:GetClass() == v then
+			-- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
 			timer.Create("snd" .. tostring(npc), 0.001, 1, function()
 				if npc:Health() <= 0 then
 					DeathEvent(npc)
