@@ -1,0 +1,5 @@
+- Barnacles cleanup isn't working properly
+-- it looks like gibs are no longer being detected properly
+-- it can happen (very rare): remove a gib that is being eaten by an alive barnacle = game crashes
+- Rebels killed by striders are turned into ragdolls and don't get deleted
+- Some combine helicoper pieces are created burning and don't get removed
