@@ -1,5 +1,6 @@
 local isMenuInitialized = false
 
+-- Run commands os the server
 local function NBC_SendToServer(command, value)
 	if not isMenuInitialized then return; end
 
@@ -9,6 +10,7 @@ local function NBC_SendToServer(command, value)
 	net.SendToServer()
 end
 
+-- Run slider commands on the server
 local function NBC_SendToServer_Slider(command, value)
 	if timer.Exists("NBC_SliderSend") then
 		timer.Destroy("NBC_SliderSend")
@@ -55,9 +57,11 @@ local function NBC_Menu(CPanel)
 			NBC_SendToServer(k, v);
 		end
 
+		-- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
+
 		delayComboBox:SetText((data["NBC_DelayScale"] == "1" or data["nbc_delayscale"] == 1) and "Second(s)" or "Minute(s)")
 		
-		if data["NBC_FadingTime"] or data["nbc_fadingtime"] then -- Avoid script errors with the older addon versions
+		if data["NBC_FadingTime"] or data["nbc_fadingtime"] then -- This hole line avoids script errors with older addon versions. TODO: Remove it after a year or so.
 			fadingComboBox:SetText(data["NBC_FadingTime"] or data["nbc_fadingtime"])
 		end
 	end

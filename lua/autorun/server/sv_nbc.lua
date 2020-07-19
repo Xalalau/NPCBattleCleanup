@@ -14,11 +14,11 @@ local lastFadingDelay
 
 local staticDelays = {
 	waitForGameNewEntities = 0.05, -- The game needs some time to create new entities after a NPC dies
-	waitForFilteredResults = 0.09, -- Lower values can lead to us dealing with incomplete results from GetFiltered()
+	waitForFilteredResults = 0.09, -- Some lower values can lead to us dealing with incomplete results from GetFiltered()
 	restoreGRagdollMaxcount = 0.4,
-	waitBurningCorpse = 7.5, -- Fixed value
+	waitBurningCorpse = 7.5, -- GMod fixed value
 	fading = {
-		-- The max fading effect delay is unlimited for sents but only 2.8s for corpses
+		-- The max fading effect delay is unlimited for sents but only 4s for corpses
 		["Fast"] = {
 			delay = 0.005,
 			g_ragdoll_fadespeed = 3000
@@ -133,10 +133,10 @@ local function IsValidBase(base, ent)
 	return false
 end
 
--- React over delay changes (seconds and minutes) refreshing the execution
+-- React over delay/fading time changes refreshing the execution
 local function ProcessOlderCleanupOrders()
 	if lastFadingDelay ~= staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay then
-		lastFadingDelay = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+	   lastFadingDelay = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 	
 		RunConsoleCommand("g_ragdoll_fadespeed", staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].g_ragdoll_fadespeed)
 	end
@@ -168,21 +168,21 @@ end
 local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
 	local list = {}
 	local base = classes == items and items_base or 
-				classes == weapons and weapons_base or
-				classes == leftovers and leftovers_base
+	             classes == weapons and weapons_base or
+	             classes == leftovers and leftovers_base
 
 	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
 		for k,v in pairs (ents.FindInSphere(position, radius)) do
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
-								classes == weapons and v:IsWeapon() or
-								classes == items and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
-											not v:IsNPC() and not v:IsRagdoll() and not v:IsNextBot() and
-											not v:IsVehicle() and not v:IsWidget()
+			                    classes == weapons and v:IsWeapon() or
+			                    classes == items and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
+			                               not v:IsNPC() and not v:IsRagdoll() and not v:IsNextBot() and
+			                               not v:IsVehicle() and not v:IsWidget()
 
-			-- Is it a dead NPC, a weapon or an item?
+			-- Is it a generic valid detection? corpse/dedris/leftover or weapon/item
 			if v:Health() <= 0 and isTypeValid then
-				-- Is the class or the base valid?
+				-- Is the detected entity from a valid class or the base?
 				if not classes then
 					isEntityValid = true
 				else
@@ -216,11 +216,11 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 end
 
 -- Remove the entities from a given list
--- Note: using a fixedDelay will force the fadingTime to 0.6s
+-- Note: using a fixedDelay will force the fadingTime to "Normal"
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
 	timer.Create(tostring(math.random(1, 9000000)) .. "re", staticDelays.waitForFilteredResults, 1, function()
-		-- New cleanup order to remove the selected entities
+		-- Remove the selected entities with a new cleanup order
 		if #list > 0 then
 			local name = tostring(math.random(1, 9000000)) .. "re2"
 			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
@@ -232,7 +232,7 @@ local function RemoveEntities(list, fixedDelay)
 			lastCleanupDelay.value = delay
 			lastCleanupDelay.scale[3] = name
 
-			-- Remove the entities with a 0.33s fading effect
+			-- Remove the entities with a fading effect
 			timer.Create(name, fixedDelay or delay, 1, function()
 				for k,v in pairs(list) do
 					if IsValid(v) and not v.doNotRemove then
@@ -240,8 +240,7 @@ local function RemoveEntities(list, fixedDelay)
 						local fadingTime = fixedDelay and 0.6 or staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 						local maxTime = CurTime() + fadingTime
 
-
-						v:SetRenderMode(RENDERMODE_TRANSCOLOR)
+						v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work on weapon bases
 
 						hook.Add("Tick", hookName, function()
 							if CurTime() >= maxTime or not v:IsValid() then
@@ -274,7 +273,7 @@ local function RemoveCorpses(identifier, noDelay)
 	-- Adjustments
 	ProcessOlderCleanupOrders()
 
-	-- New cleanup order to remove the corpses on the ground
+	-- Remove the corpses on the ground with a new cleanup order
 	if not lastCleanupDelay.waiting and currentGRagMax ~= 0 then
 		local name = "AutoRemoveCorpses"..identifier
 		local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
@@ -311,16 +310,9 @@ hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
 	end
 end)
 
--- NPC killed
+-- Process killed NPCs
+-- Note: after adding .doNotRemove to an entity this addon will not delete it
 local function DeathEvent(npc) 
-	-- HACK: If the NPC was killed by a barnacle, let it be eaten
-	-- Removing the dead NPC in this situation can lead to a crash
-	if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
-		npc.doNotRemove = true
-
-		return
-	end
-
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
 		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons, false))
@@ -335,18 +327,18 @@ local function DeathEvent(npc)
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), 128, leftovers, true)
 
-		-- HACK: deal with turned turrets
+		-- Deal with turned turrets
 		if npc:GetClass() == "npc_turret_floor" then
 			npc:SetHealth(0)
 		end
 
-		-- HACK: deal with barnacles
+		-- Deal with barnacles
 		timer.Create(tostring(npc) .. "onk_left", extraDelay or staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
 					for k2,v2 in pairs(ents.GetAll()) do
 						if v2:EntIndex() == v:EntIndex() - 1 then
-							-- Avoid deleting an NPC that is being eaten by the barnacle
+							-- Avoid deleting a NPC that is being eaten by the barnacle
 							if v2:GetClass() == "npc_barnacle_tongue_tip" then
 								list[k].doNotRemove = true
 							-- Avoid deleting the tongue of alive barnacles
@@ -359,20 +351,29 @@ local function DeathEvent(npc)
 			end
 		end)
 
-		-- HACK: the npc_combinegunship explodes around 3.2s, making it very difficult to detect its pieces
-		-- My solution is to use a constant remotion time in this case and ensure that the cleaning always works
-		RemoveEntities(list, npc:GetClass() == "npc_combinegunship" and 2 or false)
+		-- Deal with NPCs killed by barnacles: let them be eaten
+		-- Removing the dead NPCs in this situation can lead to a game crash
+		if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
+			npc.doNotRemove = true
+
+			return
+		end
+
+		-- Deal with the gunships: they explode around 3.2s after killed, making it very difficult to detect
+		-- and remove their pieces. My solution is to avoid the explosion using a constant cleanup time
+		local extraDelay = npc:GetClass() == "npc_combinegunship" and 2 or false
+		
+		RemoveEntities(list, extraDelay)
 	end
 
-	-- Clean up dead NPC's debris (little pieces)
+	-- Clean up dead NPC's debris
 	if GetConVar("NBC_NPCDebris"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), 128, debris, false, true)
 
-		-- HACK: validate any found "prop_physics"
+		-- Deal with "prop_physics": their creation time must be almost instant
 		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "prop_physics" then
-					-- Its creation time must be almost instant
 					if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
 						list[k] = nil
 					end
@@ -385,13 +386,13 @@ local function DeathEvent(npc)
 
 	-- Clean up corpses
 	if GetConVar("NBC_NPCCorpses"):GetBool() then
-		-- Burning
+		-- Deal with burning corpses:
+		-- Since I wasn't able to extinguish the fire because the game functions
+		-- were buggy and very closed, I just wait until the corpses finish burning
+		-- so they restore their normal state and become removable.
 		if npc:IsOnFire() then
-			-- HACK: Since I wasn't able to extinguish the fire because the game functions
-			-- were buggy and very closed, I just wait until the corpses finish burning so
-			-- they restore their normal state and become removable.
 			timer.Create("onk_corpses" .. tostring(npc), staticDelays.waitBurningCorpse, 1, function()
-				RemoveCorpses("onk_corpses", true) -- "onk" is passed because "npc" is nil at this point
+				RemoveCorpses("onk_corpses", true) -- "onk_corpses" is passed because the npc entity is nil at this point
 			end)
 		-- Normal
 		else
@@ -405,10 +406,9 @@ hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
 	DeathEvent(npc) 
 end)
 
--- HACK:
--- NPC damaged
--- Used to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
--- Note: when the NPCs below die in here their life is greater than 0, but on later frames it goes to 0 or lower
+-- HACK: NPC damaged
+-- It's used to try to detect when some NPCs are killed (these aren't reported in the "OnNPCKilled" hook)
+-- The NPCs listed below die with their life greater than 0 here, but on later frames it goes to 0 or lower
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
 	local detectDeath = {
 		["npc_combinegunship"] = 35, -- Usually reports 32
