@@ -251,7 +251,7 @@ local function RemoveEntities(list, fixedDelay)
 						local fadingTime = fixedDelay and 0.6 or staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 						local maxTime = CurTime() + fadingTime
 
-						v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work on weapon bases
+						v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work with custom weapon bases
 
 						hook.Add("Tick", hookName, function()
 							if CurTime() >= maxTime or not v:IsValid() then
