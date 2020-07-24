@@ -260,7 +260,11 @@ local function RemoveEntities(list, fixedDelay)
 			-- Remove the entities with a fading effect
 			timer.Create(name, fixedDelay or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) and not v.doNotRemove then
+					if IsValid(v) and
+					   not v.doNotRemove and (
+					   not IsValid(v:GetOwner()) or not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC()
+					   ) then
+
 						local hookName = tostring(v)
 						local fadingTime = fixedDelay and 0.6 or staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 						local maxTime = CurTime() + fadingTime
