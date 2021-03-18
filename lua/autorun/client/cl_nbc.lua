@@ -127,6 +127,15 @@ local function NBC_Menu(CPanel)
 	end
 
 	CPanel:Help("")
+	CPanel:Help("General:")
+
+	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_NPCDecals" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDecals", bVal); end
+	panel:SetValue(GetConVar("NBC_NPCDecals"):GetInt())
+
+	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
+
+	CPanel:Help("")
 	CPanel:Help("Dead NPCs:")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Corpses", Command = "NBC_NPCCorpses" } )
@@ -158,12 +167,6 @@ local function NBC_Menu(CPanel)
 	panel:SetValue(GetConVar("NBC_NPCDebris"):GetInt())
 
 	CPanel:ControlHelp("Metal pieces, flesh, bones and others.")
-
-	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_NPCDecals" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDecals", bVal); end
-	panel:SetValue(GetConVar("NBC_NPCDecals"):GetInt())
-
-	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
 	CPanel:Help("")
 	CPanel:Help("Dead players:")
