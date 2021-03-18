@@ -217,7 +217,7 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
 	             classes == weapons and weapons_base or
 	             classes == leftovers and leftovers_base
 
-	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitToStartFiltering, 1, function()
+	timer.Simple(staticDelays.waitToStartFiltering, function()
 		local foundEntities = inRadius == radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 	
 		for k,v in pairs (foundEntities) do
@@ -267,7 +267,7 @@ end
 -- Note: using a fixedDelay will force the fadingTime to "Normal"
 local function RemoveEntities(list, fixedDelay)
 	-- Wait until we can get informations from the area
-	timer.Create(tostring(math.random(1, 9000000)) .. "re", staticDelays.waitForFilteredResults, 1, function()
+	timer.Simple(staticDelays.waitForFilteredResults, function()
 		-- Remove the selected entities with a new cleanup order
 		if #list > 0 then
 			local name = tostring(math.random(1, 9000000)) .. "re2"
@@ -403,7 +403,7 @@ local function NPCDeathEvent(npc, radius)
 		end
 
 		-- Deal with barnacles
-		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
+		timer.Simple(staticDelays.waitForFilteredResults, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
 					for k2,v2 in pairs(ents.GetAll()) do
@@ -442,7 +442,7 @@ local function NPCDeathEvent(npc, radius)
 		local list = GetFiltered(npc:GetPos(), radius, debris, false, true)
 
 		-- Deal with "prop_physics": their creation time must be almost instant
-		timer.Create(tostring(npc) .. "onk_debris", staticDelays.waitForFilteredResults, 1, function()
+		timer.Simple(staticDelays.waitForFilteredResults, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "prop_physics" then
 					if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
@@ -469,7 +469,7 @@ local function NPCDeathEvent(npc, radius)
 		-- were buggy and very closed, I just wait until the corpses finish burning
 		-- so they restore their normal state and become removable.
 		if npc:IsOnFire() then
-			timer.Create("onk_corpses" .. tostring(npc), staticDelays.waitBurningCorpse, 1, function()
+			timer.Simple(staticDelays.waitBurningCorpse, function()
 				RemoveCorpses("onk_corpses", true) -- "onk_corpses" is passed because the npc entity is nil at this point
 			end)
 		-- Normal
@@ -490,7 +490,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 	for k,v in pairs(deathsDetectedByDamage) do
 		if npc:GetClass() == v then
 			-- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
-			timer.Create("snd" .. tostring(npc), 0.001, 1, function()
+			timer.Simple(0.001, function()
 				if npc:Health() <= 0 then
 					NPCDeathEvent(npc, npc:GetClass() == "npc_helicopter" and radius.map or radius.normal)
 				end
