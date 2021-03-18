@@ -176,8 +176,9 @@ local function IsValidBase(base, ent)
 	return false
 end
 
--- React over delay/fading time changes refreshing the execution
-local function ProcessOlderCleanupOrders()
+-- Adjust the current running timers to match new configurations
+-- "Cleanup Delay" & "Fading Speed"
+local function UpdateConfigurations()
 	if lastFadingDelay ~= staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay then
 	   lastFadingDelay = staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 
@@ -274,7 +275,7 @@ local function RemoveEntities(list, fixedDelay)
 			local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
 
 			-- Adjustments
-			ProcessOlderCleanupOrders()
+			UpdateConfigurations()
 
 			-- Store the current state
 			lastCleanupDelay.value = delay
@@ -326,7 +327,7 @@ local function RemoveCorpses(identifier, noDelay)
 	end
 
 	-- Adjustments
-	ProcessOlderCleanupOrders()
+	UpdateConfigurations()
 
 	-- Remove the corpses on the ground with a new cleanup order
 	if not lastCleanupDelay.waiting and currentGRagMax ~= 0 then
