@@ -127,7 +127,9 @@ local function NBC_Menu(CPanel)
 	end
 
 	CPanel:Help("")
-	CPanel:Help("General:")
+	local generalSection = vgui.Create("DCollapsibleCategory", CPanel)
+	generalSection:SetLabel("General")
+	generalSection:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_NPCDecals" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDecals", bVal); end
@@ -136,7 +138,9 @@ local function NBC_Menu(CPanel)
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
 	CPanel:Help("")
-	CPanel:Help("Dead NPCs:")
+	local deadNPCsSection = vgui.Create("DCollapsibleCategory", CPanel)
+	deadNPCsSection:SetLabel("Dead NPCs")
+	deadNPCsSection:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Corpses", Command = "NBC_NPCCorpses" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCCorpses", bVal); end
@@ -169,7 +173,9 @@ local function NBC_Menu(CPanel)
 	CPanel:ControlHelp("Metal pieces, flesh, bones and others.")
 
 	CPanel:Help("")
-	CPanel:Help("Dead players:")
+	local deadNPCsPlayers = vgui.Create("DCollapsibleCategory", CPanel)
+	deadNPCsPlayers:SetLabel("Dead players")
+	deadNPCsPlayers:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
@@ -184,7 +190,9 @@ local function NBC_Menu(CPanel)
 	CPanel:ControlHelp("SENTs")
 
 	CPanel:Help("")
-	CPanel:Help("Ents placed by players:")
+	local entsPlayers = vgui.Create("DCollapsibleCategory", CPanel)
+	entsPlayers:SetLabel("Ents placed by players")
+	entsPlayers:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyPlacedWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedWeapons", bVal); end
