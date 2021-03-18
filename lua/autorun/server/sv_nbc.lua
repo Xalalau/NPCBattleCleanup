@@ -339,20 +339,6 @@ local function RemoveDecals()
 end
 RemoveDecals()
 
--- Clean up player's spawned weapon
-hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
-	if GetConVar("NBC_PlyItems"):GetBool() then
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
-	end
-end)
-
--- Clean up player's spawned item
-hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
-	if GetConVar("NBC_PlyWeapons"):GetBool() then 
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
-	end
-end)
-
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
 local function DeathEvent(npc) 
@@ -464,5 +450,19 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 				end
 			end)
 		end
+	end
+end)
+
+-- Clean up player's spawned weapon
+hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
+	if GetConVar("NBC_PlyItems"):GetBool() then
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
+	end
+end)
+
+-- Clean up player's spawned item
+hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
+	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
 	end
 end)
