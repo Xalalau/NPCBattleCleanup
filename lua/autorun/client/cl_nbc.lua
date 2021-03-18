@@ -160,7 +160,7 @@ local function NBC_Menu(CPanel)
 	CPanel:ControlHelp("Metal pieces, flesh, bones and others.")
 
 	CPanel:Help("")
-	CPanel:Help("Positioned by players:")
+	CPanel:Help("Ents placed by players:")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
