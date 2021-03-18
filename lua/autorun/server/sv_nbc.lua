@@ -262,7 +262,7 @@ local function RemoveEntities(list, fixedDelay)
 				for k,v in pairs(list) do
 					if IsValid(v) and
 					   not v.doNotRemove and (
-					   not IsValid(v:GetOwner()) or not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC()
+					   not IsValid(v:GetOwner()) or not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() or  v:GetOwner():Health() <= 0
 					   ) then
 
 						local hookName = tostring(v)
@@ -342,6 +342,12 @@ RemoveDecals()
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
 local function NPCDeathEvent(npc) 
+	-- Deal with barnacles
+	-- Their state at dying remains 0, so I force it to 7, which is expected
+	if npc:GetClass() == "npc_barnacle" then
+		npc:SetNPCState(7)
+	end
+
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
 		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons, false))
