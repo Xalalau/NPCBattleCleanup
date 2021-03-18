@@ -179,6 +179,8 @@ local function NBC_Menu(CPanel)
 	panel:SetValue(GetConVar("NBC_PlyItems"):GetInt())
 
 	CPanel:ControlHelp("SENTs")
+
+	CPanel:Help("")
 end
 
 hook.Add("PopulateToolMenu", "PopulateSCMenu", function()
