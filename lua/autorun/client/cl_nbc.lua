@@ -40,7 +40,7 @@ local function NBC_Menu(CPanel)
 	})
 
 	options = {
-		NBC_NPCDecals = 1,
+		NBC_Decals = 1,
 		NBC_NPCCorpses = 1,
 		NBC_NPCLeftovers = 1,
 		NBC_NPCWeapons = 1,
@@ -134,9 +134,9 @@ local function NBC_Menu(CPanel)
 	generalSection:SetLabel("General")
 	generalSection:Dock(TOP)
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_NPCDecals" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDecals", bVal); end
-	panel:SetValue(GetConVar("NBC_NPCDecals"):GetInt())
+	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_Decals" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_Decals", bVal); end
+	panel:SetValue(GetConVar("NBC_Decals"):GetInt())
 
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 

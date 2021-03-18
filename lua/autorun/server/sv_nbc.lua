@@ -328,7 +328,7 @@ end
 -- Remove decals of blood, explosions, gunshots and others
 local function RemoveDecals()
 	timer.Create("nbc_autoremovedecals", 60, 0, function()
-		if GetConVar("NBC_NPCDecals"):GetBool() then
+		if GetConVar("NBC_Decals"):GetBool() then
 			for k,ply in ipairs(player.GetHumans()) do
 				if ply and IsValid(ply) and ply:IsValid() then
 					ply:ConCommand("r_cleardecals")
