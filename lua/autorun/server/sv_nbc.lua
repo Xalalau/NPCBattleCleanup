@@ -225,7 +225,7 @@ local function GetFiltered(position, radius, classes, matchClassExactly, scanEve
 			-- if it's a valid entity...
 			if isEntityValid then
 				-- It's ownerless: get it
-				if not IsValid(v:GetOwner()) or scanEverything and not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() then
+				if not IsValid(v:GetOwner()) or not v:GetOwner():IsValid() or scanEverything and not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() then
 					table.insert(list, v)
 				-- It's owned by a player: skip it
 				elseif v:GetOwner():IsPlayer() then
@@ -262,7 +262,10 @@ local function RemoveEntities(list, fixedDelay)
 				for k,v in pairs(list) do
 					if IsValid(v) and
 					   not v.doNotRemove and (
-					   not IsValid(v:GetOwner()) or not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() or  v:GetOwner():Health() <= 0
+					       not IsValid(v:GetOwner()) or
+						   not v:GetOwner():IsValid() or
+						   not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() or
+						   v:GetOwner():Health() <= 0
 					   ) then
 
 						local hookName = tostring(v)
@@ -419,6 +422,13 @@ local function NPCDeathEvent(npc)
 			end
 		end)
 
+		-- Deal with combibe helicopters: they drop debris long before they die all over the map
+		if npc:GetClass() == "npc_helicopter" then
+			timer.Simple(6.5, function()
+				RemoveEntities(GetFiltered(Vector(0,0,0), -1, { "gib" }, false, true))
+			end)
+		end
+
 		RemoveEntities(list)
 	end
 
@@ -485,5 +495,19 @@ hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
 	-- Clean up player's weapons
 	if GetConVar("NBC_PlyWeapons"):GetBool() then 
 		RemoveEntities(GetFiltered(ply:GetPos(), 128, weapons, false))
+	end
+end)
+
+-- Hook: Player Disconnected
+hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
+	-- Kill all live NPCs from disconnected players
+	if GetConVar("NBC_DisconnectionCleanup"):GetBool() then
+		for _,ent in ipairs(ents.GetAll()) do
+			if ent and IsValid(ent) and ent:IsValid() and ent:GetOwner() and ent:IsNPC() then
+				if not ent:GetOwner():IsValid() then
+					ent:TakeDamage(999999, ent, ent)
+				end
+			end
+		end
 	end
 end)

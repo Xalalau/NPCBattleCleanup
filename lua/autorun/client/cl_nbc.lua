@@ -41,6 +41,7 @@ local function NBC_Menu(CPanel)
 
 	options = {
 		NBC_Decals = 1,
+		NBC_DisconnectionCleanup = 1,
 		NBC_NPCCorpses = 1,
 		NBC_NPCLeftovers = 1,
 		NBC_NPCWeapons = 1,
@@ -139,6 +140,12 @@ local function NBC_Menu(CPanel)
 	panel:SetValue(GetConVar("NBC_Decals"):GetInt())
 
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
+
+	panel = CPanel:AddControl("CheckBox", { Label = "Kill Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal); end
+	panel:SetValue(GetConVar("NBC_DisconnectionCleanup"):GetInt())
+
+	CPanel:ControlHelp("Kill all live NPCs from disconnected players.")
 
 	CPanel:Help("")
 	local deadNPCsSection = vgui.Create("DCollapsibleCategory", CPanel)

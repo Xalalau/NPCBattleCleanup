@@ -1,5 +1,6 @@
 local cvars = {
 	NBC_Decals = 1,
+	NBC_DisconnectionCleanup = 1,
 
 	NBC_NPCCorpses = 1,
 	NBC_NPCLeftovers = 1,
