@@ -17,11 +17,16 @@ local lastCleanupDelay = {
 	}
 }
 
+local radius = {
+	small = 32,
+	normal = 128,
+	large = 256,
+	map = -1
+}
+
 local lastFadingDelay
 
 local staticDelays = {
-	waitForGameNewEntities = 0.05, -- The game needs some time to create new entities after a NPC dies
-	waitForFilteredResults = 0.09, -- Some lower values can lead to us dealing with incomplete results from GetFiltered()
 	restoreGRagdollMaxcount = 0.4,
 	waitBurningCorpse = 7.5, -- GMod fixed value
 	fading = {
@@ -40,6 +45,13 @@ local staticDelays = {
 		}
 	}
 }
+
+-- The minimum time that the game needs to create new entities after a NPC dies
+staticDelays.waitForGameNewEntities = 0.05
+-- Start filtering entities an instant after the game is ready. It makes it possible to do any extra preparations in the meantime
+staticDelays.waitToStartFiltering = staticDelays.waitForGameNewEntities + 0.01
+-- The minimum time before using the filtered results list. If we access it too fast, we may end up with an incomplete table
+staticDelays.waitForFilteredResults = staticDelays.waitToStartFiltering + 0.03
 
 -- Workaround to detected NPC deaths that aren't reported in the "OnNPCKilled" hook
 local deathsDetectedByDamage = { -- Search for perfect matches
@@ -117,6 +129,16 @@ local debris = { -- Search for substrings
 	"helicopter_chunk"
 }
 
+--[[
+	By default, I process NPC deaths waiting for the game to make some changes to check them later
+
+	e.g. "prop_ragdoll_attached" is like this:
+		Barnacles immediately turn the victims into a prop_ragdoll_attached and go through the OnEntityCreated hook
+		Striders impaled NPCs go through OnNPCKilled hook with their original classes and turn into prop_ragdoll_attached some frame later
+
+	So it's clear that sometimes I need to wait to get the right results. This is how most kills with entities creation work.
+--]]
+
 -- Update fading time on new players
 hook.Add("PlayerInitialSpawn", "NBC_Initialize", function(ply)
 	net.Start("NBC_UpdateFadingTime")
@@ -187,15 +209,15 @@ end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
--- radius = -1 will force the filter to check the hole map
-local function GetFiltered(position, radius, classes, matchClassExactly, scanEverything)
+-- radius = radius.map will force the filter to check the hole map
+local function GetFiltered(position, inRadius, classes, matchClassExactly, scanEverything)
 	local list = {}
 	local base = classes == items and items_base or 
 	             classes == weapons and weapons_base or
 	             classes == leftovers and leftovers_base
 
-	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitForGameNewEntities, 1, function()
-		local foundEntities = radius == -1 and ents.GetAll() or ents.FindInSphere(position, radius)
+	timer.Create(tostring(math.random(1, 9000000)) .. "gf", staticDelays.waitToStartFiltering, 1, function()
+		local foundEntities = inRadius == radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 	
 		for k,v in pairs (foundEntities) do
 			local isEntityValid = false
@@ -344,7 +366,7 @@ RemoveDecals()
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function NPCDeathEvent(npc) 
+local function NPCDeathEvent(npc, radius) 
 	-- Deal with barnacles
 	-- Their state at dying remains 0, so I force it to 7, which is expected
 	if npc:GetClass() == "npc_barnacle" then
@@ -353,17 +375,17 @@ local function NPCDeathEvent(npc)
 
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons, false))
+		RemoveEntities(GetFiltered(npc:GetPos(), radius, weapons, false))
 	end
 
 	-- Clean up NPC's items
 	if GetConVar("NBC_NPCItems"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), 128, items, false))
+		RemoveEntities(GetFiltered(npc:GetPos(), radius, items, false))
 	end
 
 	-- Clean up dead NPC's leftovers
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
-		local list = GetFiltered(npc:GetPos(), 128, leftovers, true)
+		local list = GetFiltered(npc:GetPos(), radius, leftovers, true)
 
 		-- Deal with turned turrets
 		if npc:GetClass() == "npc_turret_floor" then
@@ -371,7 +393,7 @@ local function NPCDeathEvent(npc)
 		end
 
 		-- Deal with barnacles
-		timer.Create(tostring(npc) .. "onk_left", extraDelay or staticDelays.waitForFilteredResults, 1, function()
+		timer.Create(tostring(npc) .. "onk_left", staticDelays.waitForFilteredResults, 1, function()
 			for k,v in pairs(list) do
 				if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
 					for k2,v2 in pairs(ents.GetAll()) do
@@ -407,8 +429,6 @@ local function NPCDeathEvent(npc)
 	-- Clean up dead NPC's debris
 	if GetConVar("NBC_NPCDebris"):GetBool() then
 		-- Deal with combibe helicopters: they drop debris long before they die all over the map
-		local radius = npc:GetClass() == "npc_helicopter" and -1 or 128
-
 		local list = GetFiltered(npc:GetPos(), radius, debris, false, true)
 
 		-- Deal with "prop_physics": their creation time must be almost instant
@@ -425,7 +445,7 @@ local function NPCDeathEvent(npc)
 		-- Deal with combibe helicopters: they drop debris long before they die all over the map
 		if npc:GetClass() == "npc_helicopter" then
 			timer.Simple(6.5, function()
-				RemoveEntities(GetFiltered(Vector(0,0,0), -1, { "gib" }, false, true))
+				RemoveEntities(GetFiltered(Vector(0,0,0), radius, { "gib" }, false, true))
 			end)
 		end
 
@@ -451,7 +471,7 @@ end
 
 -- Hook: NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-	NPCDeathEvent(npc) 
+	NPCDeathEvent(npc, radius.normal) 
 end)
 
 -- Hook: NPC damaged
@@ -462,7 +482,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 			-- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
 			timer.Create("snd" .. tostring(npc), 0.001, 1, function()
 				if npc:Health() <= 0 then
-					NPCDeathEvent(npc)
+					NPCDeathEvent(npc, npc:GetClass() == "npc_helicopter" and radius.map or radius.normal)
 				end
 			end)
 		end
@@ -473,7 +493,7 @@ end)
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
 	-- Clean up player's weapons
 	if GetConVar("NBC_PlyPlacedItems"):GetBool() then
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, items, false))
 	end
 end)
 
@@ -481,7 +501,7 @@ end)
 hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
 	-- Clean up player's items
 	if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, weapons, false))
 	end
 end)
 
@@ -489,12 +509,12 @@ end)
 hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
 	-- Clean up player's items
 	if GetConVar("NBC_PlyItems"):GetBool() then
-		RemoveEntities(GetFiltered(ply:GetPos(), 128, items, false))
+		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, items, false))
 	end
 
 	-- Clean up player's weapons
 	if GetConVar("NBC_PlyWeapons"):GetBool() then 
-		RemoveEntities(GetFiltered(ply:GetPos(), 128, weapons, false))
+		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, weapons, false))
 	end
 end)
 
