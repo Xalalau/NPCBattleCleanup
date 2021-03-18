@@ -64,6 +64,7 @@ local function NBC_Menu(CPanel)
 	panel.OnSelect = function(self, index, text, data)
 		for k,v in pairs(data) do
 			NBC_SendToServer(k, v)
+			RunConsoleCommand(k, v)
 		end
 
 		-- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
