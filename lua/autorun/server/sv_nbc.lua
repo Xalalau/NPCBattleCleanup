@@ -106,6 +106,7 @@ local items_base = { -- Search for perfect matches
 local leftovers = { -- Search for perfect matches
 	-- Default:
 	"prop_ragdoll",
+	"prop_ragdoll_attached",
 	"npc_barnacle",
 	"npc_turret_floor",
 	"floorturret_tipcontroller",
@@ -387,6 +388,15 @@ local function NPCDeathEvent(npc, radius)
 	if GetConVar("NBC_NPCLeftovers"):GetBool() then
 		local list = GetFiltered(npc:GetPos(), radius, leftovers, true)
 
+		-- Deal with "prop_ragdoll_attached"
+		timer.Simple(staticDelays.waitForGameNewEntities, function()
+			for _,ent in ipairs(ents.GetAll()) do
+				if ent and IsValid(ent) and ent:IsValid() and ent:GetClass() == "prop_ragdoll_attached" then
+					ent:SetOwner()
+				end
+			end
+		end)
+
 		-- Deal with turned turrets
 		if npc:GetClass() == "npc_turret_floor" then
 			npc:SetHealth(0)
@@ -529,5 +539,13 @@ hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
 				end
 			end
 		end
+	end
+end)
+
+-- Hook: Entity Created
+hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
+	-- Barnacles create prop_ragdoll_attached
+	if ent:GetClass() == "prop_ragdoll_attached" then
+		NPCDeathEvent(ent, radius.map)
 	end
 end)
