@@ -4,6 +4,7 @@ local cvars = {
 	NBC_NPCWeapons = 1,
 	NBC_NPCItems = 1,
 	NBC_NPCDebris = 1,
+	NBC_NPCDecals = 1,
 
 	NBC_PlyWeapons = 0,
 	NBC_PlyItems = 0,

@@ -325,6 +325,20 @@ local function RemoveCorpses(identifier, noDelay)
 	end
 end
 
+-- Remove decals of blood, explosions, gunshots and others
+local function RemoveDecals()
+	timer.Create("nbc_autoremovedecals", 60, 0, function()
+		if GetConVar("NBC_NPCDecals"):GetBool() then
+			for k,ply in ipairs(player.GetHumans()) do
+				if ply and IsValid(ply) and ply:IsValid() then
+					ply:ConCommand("r_cleardecals")
+				end
+			end
+		end
+	end)
+end
+RemoveDecals()
+
 -- Clean up player's spawned weapon
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
 	if GetConVar("NBC_PlyItems"):GetBool() then

@@ -159,6 +159,12 @@ local function NBC_Menu(CPanel)
 
 	CPanel:ControlHelp("Metal pieces, flesh, bones and others.")
 
+	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_NPCDecals" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDecals", bVal); end
+	panel:SetValue(GetConVar("NBC_NPCDecals"):GetInt())
+
+	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
+
 	CPanel:Help("")
 	CPanel:Help("Ents placed by players:")
 
