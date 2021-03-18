@@ -182,5 +182,5 @@ local function NBC_Menu(CPanel)
 end
 
 hook.Add("PopulateToolMenu", "PopulateSCMenu", function()
-	spawnmenu.AddToolMenuOption("Utilities", "Admin", "NBCOptions", "NBC Options", "", "", NBC_Menu)
+	spawnmenu.AddToolMenuOption("Utilities", "Admin", "NBCOptions", "NPC Battle Cleanup", "", "", NBC_Menu)
 end)
