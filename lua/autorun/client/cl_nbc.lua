@@ -36,7 +36,7 @@ local function NBC_Menu(CPanel)
 	end)
 
 	CPanel:AddControl("Header", {
-		Description = "keep your free map of battle remains!"
+		Description = "keep your map free of battle remains!"
 	})
 
 	options = {
