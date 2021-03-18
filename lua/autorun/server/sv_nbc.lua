@@ -341,7 +341,7 @@ RemoveDecals()
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function DeathEvent(npc) 
+local function NPCDeathEvent(npc) 
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
 		RemoveEntities(GetFiltered(npc:GetPos(), 128, weapons, false))
@@ -433,12 +433,12 @@ local function DeathEvent(npc)
 	end
 end
 
--- NPC killed
+-- Hook: NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-	DeathEvent(npc) 
+	NPCDeathEvent(npc) 
 end)
 
--- NPC damaged
+-- Hook: NPC damaged
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
 	-- HACK: Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
 	for k,v in pairs(deathsDetectedByDamage) do
@@ -446,22 +446,24 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 			-- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
 			timer.Create("snd" .. tostring(npc), 0.001, 1, function()
 				if npc:Health() <= 0 then
-					DeathEvent(npc)
+					NPCDeathEvent(npc)
 				end
 			end)
 		end
 	end
 end)
 
--- Clean up player's spawned weapon
+-- Hook: Player spawned a sent
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
+	-- Clean up player's spawned weapon
 	if GetConVar("NBC_PlyItems"):GetBool() then
 		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
 	end
 end)
 
--- Clean up player's spawned item
+-- Hook: Player spawned a swep
 hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
+	-- Clean up player's spawned item
 	if GetConVar("NBC_PlyWeapons"):GetBool() then 
 		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
 	end
