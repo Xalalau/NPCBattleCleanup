@@ -203,7 +203,7 @@ local function NBC_Menu(CPanel)
 
 	CPanel:Help("")
 	local entsPlayers = vgui.Create("DCollapsibleCategory", CPanel)
-	entsPlayers:SetLabel("Ents placed by players")
+	entsPlayers:SetLabel("Entities placed by players")
 	entsPlayers:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyPlacedWeapons" } )
