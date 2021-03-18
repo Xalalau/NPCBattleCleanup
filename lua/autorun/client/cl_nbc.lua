@@ -76,6 +76,9 @@ local function NBC_Menu(CPanel)
 	end
 
 	CPanel:Help("")
+	local configurationsSection = vgui.Create("DCollapsibleCategory", CPanel)
+	configurationsSection:SetLabel("Configurations")
+	configurationsSection:Dock(TOP)
 
 	panel = CPanel:AddControl("Slider", {
 		Command = "NBC_Delay",
@@ -106,8 +109,6 @@ local function NBC_Menu(CPanel)
 	for k,v in pairs(options) do
 		delayComboBox:AddChoice(k, v.scale, v.selected or false, v.icon)
 	end
-
-	CPanel:Help("")
 
 	options = {
 		["Fast"] = {
