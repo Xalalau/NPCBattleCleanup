@@ -7,7 +7,7 @@ end)
 
 -- Run commands os the server
 local function NBC_SendToServer(command, value)
-	if not isMenuInitialized then return; end
+	if not isMenuInitialized then return end
 
 	net.Start("NBC_UpdateCVar")
 		net.WriteString(command)
@@ -63,7 +63,7 @@ local function NBC_Menu(CPanel)
 	})
 	panel.OnSelect = function(self, index, text, data)
 		for k,v in pairs(data) do
-			NBC_SendToServer(k, v);
+			NBC_SendToServer(k, v)
 		end
 
 		-- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
@@ -84,7 +84,7 @@ local function NBC_Menu(CPanel)
 		Min = "0.01",
 		Max = "60"
 	})
-	panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val); end
+	panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val) end
 	panel:SetValue(GetConVar("NBC_Delay"):GetInt())
 
 	options = {
@@ -102,7 +102,7 @@ local function NBC_Menu(CPanel)
 		Command = "NBC_DelayScale",
 		Label = ""
 	})
-	delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data); end
+	delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data) end
 	for k,v in pairs(options) do
 		delayComboBox:AddChoice(k, v.scale, v.selected or false, v.icon)
 	end
@@ -125,7 +125,7 @@ local function NBC_Menu(CPanel)
 		Command = "NBC_FadingTime",
 		Label = "Fading Speed"
 	})
-	fadingComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_FadingTime", text); end
+	fadingComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_FadingTime", text) end
 	for k,v in pairs(options) do
 		fadingComboBox:AddChoice(k, "", v.selected or false, v.icon)
 	end
@@ -136,13 +136,13 @@ local function NBC_Menu(CPanel)
 	generalSection:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Decals", Command = "NBC_Decals" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_Decals", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_Decals", bVal) end
 	panel:SetValue(GetConVar("NBC_Decals"):GetInt())
 
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Kill Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal) end
 	panel:SetValue(GetConVar("NBC_DisconnectionCleanup"):GetInt())
 
 	CPanel:ControlHelp("Kill all live NPCs from disconnected players.")
@@ -153,31 +153,31 @@ local function NBC_Menu(CPanel)
 	deadNPCsSection:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Corpses", Command = "NBC_NPCCorpses" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCCorpses", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCCorpses", bVal) end
 	panel:SetValue(GetConVar("NBC_NPCCorpses"):GetInt())
 
 	CPanel:ControlHelp("Most of the bodies that fall on the ground.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Leftovers", Command = "NBC_NPCLeftovers" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCLeftovers", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCLeftovers", bVal) end
 	panel:SetValue(GetConVar("NBC_NPCLeftovers"):GetInt())
 
 	CPanel:ControlHelp("Differentiated entities, such as turned turrets, bodies with \"Keep corpses\" and some pieces that drop from the combine helicopter.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_NPCWeapons" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCWeapons", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCWeapons", bVal) end
 	panel:SetValue(GetConVar("NBC_NPCWeapons"):GetInt())
 
 	CPanel:ControlHelp("The weapons carried by the NPCs, if they're configured to fall.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_NPCItems" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCItems", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCItems", bVal) end
 	panel:SetValue(GetConVar("NBC_NPCItems"):GetInt())
 
 	CPanel:ControlHelp("Ammo, batteries and other items that the NPCs can drop.")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Debris", Command = "NBC_NPCDebris" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDebris", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_NPCDebris", bVal) end
 	panel:SetValue(GetConVar("NBC_NPCDebris"):GetInt())
 
 	CPanel:ControlHelp("Metal pieces, flesh, bones and others.")
@@ -188,13 +188,13 @@ local function NBC_Menu(CPanel)
 	deadNPCsPlayers:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyWeapons" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal) end
 	panel:SetValue(GetConVar("NBC_PlyWeapons"):GetInt())
 
 	CPanel:ControlHelp("SWEPs")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_PlyItems" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyItems", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyItems", bVal) end
 	panel:SetValue(GetConVar("NBC_PlyItems"):GetInt())
 
 	CPanel:ControlHelp("SENTs")
@@ -205,13 +205,13 @@ local function NBC_Menu(CPanel)
 	entsPlayers:Dock(TOP)
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyPlacedWeapons" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedWeapons", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedWeapons", bVal) end
 	panel:SetValue(GetConVar("NBC_PlyPlacedWeapons"):GetInt())
 
 	CPanel:ControlHelp("SWEPs")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_PlyPlacedItems" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedItems", bVal); end
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedItems", bVal) end
 	panel:SetValue(GetConVar("NBC_PlyPlacedItems"):GetInt())
 
 	CPanel:ControlHelp("SENTs")
