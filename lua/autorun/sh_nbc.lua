@@ -6,8 +6,11 @@ local cvars = {
 	NBC_NPCDebris = 1,
 	NBC_NPCDecals = 1,
 
-	NBC_PlyWeapons = 0,
-	NBC_PlyItems = 0,
+	NBC_PlyWeapons = 1,
+	NBC_PlyItems = 1,
+
+	NBC_PlyPlacedWeapons = 0,
+	NBC_PlyPlacedItems = 0,
 
 	NBC_FadingTime = "Normal",
 

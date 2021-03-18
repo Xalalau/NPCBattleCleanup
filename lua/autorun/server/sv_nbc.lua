@@ -455,16 +455,29 @@ end)
 
 -- Hook: Player spawned a sent
 hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
-	-- Clean up player's spawned weapon
-	if GetConVar("NBC_PlyItems"):GetBool() then
+	-- Clean up player's weapons
+	if GetConVar("NBC_PlyPlacedItems"):GetBool() then
 		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, items, false))
 	end
 end)
 
 -- Hook: Player spawned a swep
 hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
-	-- Clean up player's spawned item
-	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+	-- Clean up player's items
+	if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
 		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), 32, weapons, false))
+	end
+end)
+
+-- Hook: Player killed
+hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
+	-- Clean up player's items
+	if GetConVar("NBC_PlyItems"):GetBool() then
+		RemoveEntities(GetFiltered(ply:GetPos(), 128, items, false))
+	end
+
+	-- Clean up player's weapons
+	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+		RemoveEntities(GetFiltered(ply:GetPos(), 128, weapons, false))
 	end
 end)

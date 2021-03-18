@@ -166,7 +166,7 @@ local function NBC_Menu(CPanel)
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
 	CPanel:Help("")
-	CPanel:Help("Ents placed by players:")
+	CPanel:Help("Dead players:")
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyWeapons", bVal); end
@@ -177,6 +177,21 @@ local function NBC_Menu(CPanel)
 	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_PlyItems" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyItems", bVal); end
 	panel:SetValue(GetConVar("NBC_PlyItems"):GetInt())
+
+	CPanel:ControlHelp("SENTs")
+
+	CPanel:Help("")
+	CPanel:Help("Ents placed by players:")
+
+	panel = CPanel:AddControl("CheckBox", { Label = "Weapons", Command = "NBC_PlyPlacedWeapons" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedWeapons", bVal); end
+	panel:SetValue(GetConVar("NBC_PlyPlacedWeapons"):GetInt())
+
+	CPanel:ControlHelp("SWEPs")
+
+	panel = CPanel:AddControl("CheckBox", { Label = "Items", Command = "NBC_PlyPlacedItems" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_PlyPlacedItems", bVal); end
+	panel:SetValue(GetConVar("NBC_PlyPlacedItems"):GetInt())
 
 	CPanel:ControlHelp("SENTs")
 
