@@ -225,7 +225,6 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
 		local foundEntities = inRadius == radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 	
 		for k,v in pairs (foundEntities) do
-			print(v)
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
 			                    classes == weapons and v:IsWeapon() or
