@@ -550,3 +550,11 @@ hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 		NPCDeathEvent(ent, radius.map)
 	end
 end)
+
+-- Hook: Player dropped weapon using Lua
+hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
+	-- Clean up player's weapons
+	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, weapons, false))
+	end
+end)
