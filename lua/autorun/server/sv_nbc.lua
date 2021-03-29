@@ -556,8 +556,8 @@ end)
 
 -- Hook: Player dropped weapon using Lua
 hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
-	-- Clean up player's weapons
-	if GetConVar("NBC_PlyWeapons"):GetBool() then 
+	-- Clean up weapons dropped by live players
+	if GetConVar("NBC_LivePlyDroppedWeapons"):GetBool() then 
 		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, weapons, false))
 	end
 end)
