@@ -389,7 +389,9 @@ local function NPCDeathEvent(npc, radius)
 	end
 
 	-- Clean up dead NPC's leftovers
-	if GetConVar("NBC_NPCLeftovers"):GetBool() and not GetConVar("ai_serverragdolls"):GetBool() then
+	if GetConVar("NBC_NPCLeftovers"):GetBool() and
+	   (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
+	
 		local list = GetFiltered(npc:GetPos(), radius, leftovers, true)
 
 		-- Deal with "prop_ragdoll_attached"
@@ -467,7 +469,8 @@ local function NPCDeathEvent(npc, radius)
 	end
 
 	-- Clean up corpses
-	if GetConVar("NBC_NPCCorpses"):GetBool() and not GetConVar("ai_serverragdolls"):GetBool() then
+	if GetConVar("NBC_NPCCorpses"):GetBool() and
+	   (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
 		-- Deal with burning corpses:
 		-- Since I wasn't able to extinguish the fire because the game functions
 		-- were buggy and very closed, I just wait until the corpses finish burning

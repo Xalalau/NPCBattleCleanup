@@ -43,6 +43,7 @@ local function NBC_Menu(CPanel)
 		NBC_Decals = 1,
 		NBC_DisconnectionCleanup = 1,
 		NBC_LivePlyDroppedWeapons = 1,
+		NBC_GModKeepCorpses = 0,
 		NBC_NPCCorpses = 1,
 		NBC_NPCLeftovers = 1,
 		NBC_NPCWeapons = 1,
@@ -155,6 +156,12 @@ local function NBC_Menu(CPanel)
 	panel:SetValue(GetConVar("NBC_LivePlyDroppedWeapons"):GetInt())
 
 	CPanel:ControlHelp("Remove dropped/stripped weapons from live players.")
+
+	panel = CPanel:AddControl("CheckBox", { Label = "Corpses When \"Keep Corpses\" Is ON", Command = "NBC_GModKeepCorpses" } )
+	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_GModKeepCorpses", bVal) end
+	panel:SetValue(GetConVar("NBC_GModKeepCorpses"):GetInt())
+
+	CPanel:ControlHelp("Remove corpses even when the GMod option \"Keep Corses\" is turned on.")
 
 	CPanel:Help("")
 	local deadNPCsSection = vgui.Create("DCollapsibleCategory", CPanel)
