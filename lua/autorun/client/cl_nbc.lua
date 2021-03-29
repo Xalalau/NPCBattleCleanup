@@ -144,7 +144,7 @@ local function NBC_Menu(CPanel)
 
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Kill Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
+	panel = CPanel:AddControl("CheckBox", { Label = "Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal) end
 	panel:SetValue(GetConVar("NBC_DisconnectionCleanup"):GetInt())
 
