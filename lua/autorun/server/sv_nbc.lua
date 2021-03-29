@@ -506,22 +506,6 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 	end
 end)
 
--- Hook: Player spawned a sent
-hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, class)
-	-- Clean up player's weapons
-	if GetConVar("NBC_PlyPlacedItems"):GetBool() then
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, items, false))
-	end
-end)
-
--- Hook: Player spawned a swep
-hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, weapon, swep)
-	-- Clean up player's items
-	if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
-		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, weapons, false))
-	end
-end)
-
 -- Hook: Player killed
 hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
 	-- Clean up player's items
@@ -565,3 +549,22 @@ hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
 		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, weapons, false))
 	end
 end)
+
+-- SANDBOX DERIVED GAMEMODES:
+if GAMEMODE.IsSandboxDerived then
+	-- Hook: Player spawned a sent
+	hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
+		-- Clean up player's weapons
+		if GetConVar("NBC_PlyPlacedItems"):GetBool() then
+			RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, items, false))
+		end
+	end)
+
+	-- Hook: Player spawned a swep
+	hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
+		-- Clean up player's items
+		if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
+			RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, weapons, false))
+		end
+	end)
+end
