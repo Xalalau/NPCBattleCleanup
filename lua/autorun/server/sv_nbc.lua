@@ -550,6 +550,7 @@ hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
 end)
 
 -- Hook: Entity Created
+--   Note: many entities from dead NPCs/players don't appear here
 hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 	-- Barnacles create prop_ragdoll_attached
 	if ent:GetClass() == "prop_ragdoll_attached" then
