@@ -557,6 +557,16 @@ hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 	if ent:GetClass() == "prop_ragdoll_attached" then
 		NPCDeathEvent(ent, radius.map)
 	end
+
+	-- Clean up player's spawned weapons
+	if GetConVar("NBC_PlyPlacedItems"):GetBool() then
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, items, false))
+	end
+
+	-- Clean up player's spawned items
+	if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
+		RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, weapons, false))
+	end
 end)
 
 -- Hook: Player dropped weapon using Lua
