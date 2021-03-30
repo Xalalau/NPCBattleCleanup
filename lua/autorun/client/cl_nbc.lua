@@ -145,11 +145,13 @@ local function NBC_Menu(CPanel)
 
 	CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots and others.")
 
-	panel = CPanel:AddControl("CheckBox", { Label = "Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
-	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal) end
-	panel:SetValue(GetConVar("NBC_DisconnectionCleanup"):GetInt())
+	if not game.SinglePlayer() then
+		panel = CPanel:AddControl("CheckBox", { Label = "Abandoned NPCs", Command = "NBC_DisconnectionCleanup" } )
+		panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_DisconnectionCleanup", bVal) end
+		panel:SetValue(GetConVar("NBC_DisconnectionCleanup"):GetInt())
 
-	CPanel:ControlHelp("Kill all live NPCs from disconnected players.")
+		CPanel:ControlHelp("Kill all live NPCs from disconnected players.")
+	end
 
 	panel = CPanel:AddControl("CheckBox", { Label = "Weapons Dropped By Live Players", Command = "NBC_LivePlyDroppedWeapons" } )
 	panel.OnChange = function(self, bVal) NBC_SendToServer("NBC_LivePlyDroppedWeapons", bVal) end
