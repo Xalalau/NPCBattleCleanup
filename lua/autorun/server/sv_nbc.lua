@@ -224,7 +224,7 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
 	timer.Simple(staticDelays.waitToStartFiltering, function()
 		local foundEntities = inRadius == radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 	
-		for k,v in pairs (foundEntities) do
+		for k,v in pairs(foundEntities) do
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
 			                    classes == weapons and v:IsWeapon() or
@@ -267,6 +267,30 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
 	return list
 end
 
+-- Check if we can remove an entity
+local function IsRemovable(ent)
+	if IsValid(ent) then -- Valid entity
+		if not ent.doNotRemove then -- Not set to not be removed
+			if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by the player
+				if ent:IsWeapon() and GetConVar("NBC_PlyPlacedWeapons"):GetBool() or -- a weapon with NBC_PlyWeapons turned off
+                   not ent:IsWeapon() and not ent:IsRagdoll() and GetConVar("NBC_PlyPlacedItems"):GetBool() -- a sent with NBC_PlyItems turned off
+					then
+
+					return true
+			   end
+			elseif not IsValid(ent:GetOwner()) or -- Nil owner
+				not ent:GetOwner():IsValid() or -- Uninitialized owner
+				not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() or -- Not owned by a player or NPC
+				ent:GetOwner():Health() <= 0 then -- The owner is dead
+
+				return true
+			end
+		end
+	end
+
+	return false
+end
+
 -- Remove the entities from a given list
 -- Note: using a fixedDelay will force the fadingTime to "Normal"
 local function RemoveEntities(list, fixedDelay)
@@ -287,14 +311,7 @@ local function RemoveEntities(list, fixedDelay)
 			-- Remove the entities with a fading effect
 			timer.Create(name, fixedDelay or delay, 1, function()
 				for k,v in pairs(list) do
-					if IsValid(v) and
-					   not v.doNotRemove and (
-					       not IsValid(v:GetOwner()) or
-						   not v:GetOwner():IsValid() or
-						   not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() or
-						   v:GetOwner():Health() <= 0
-					   ) then
-
+					if IsRemovable(v) then
 						local hookName = tostring(v)
 						local fadingTime = fixedDelay and 0.6 or staticDelays.fading[GetConVar("NBC_FadingTime"):GetString()].delay
 						local maxTime = CurTime() + fadingTime
@@ -552,19 +569,47 @@ end)
 
 -- SANDBOX DERIVED GAMEMODES:
 if GAMEMODE.IsSandboxDerived then
+	-- Hook: Player spawned a ragdoll
+	hook.Add("PlayerSpawnedRagdoll", "NBC_PlayerSpawnedRagdoll", function(ply, model, ragdoll)
+		-- Set the player as the entity creator
+		ragdoll:SetCreator(ply)
+	end)
+
 	-- Hook: Player spawned a sent
 	hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
+		local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, items, false)
+
+		-- Set the player as the entity creator
+		timer.Simple(staticDelays.waitForFilteredResults, function()
+			for _,ent in ipairs(list) do
+				if ent:GetCreationTime() - CurTime() <= 0.2 then
+					ent:SetCreator(ply)
+				end
+			end
+		end)
+
 		-- Clean up player's weapons
 		if GetConVar("NBC_PlyPlacedItems"):GetBool() then
-			RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, items, false))
+			RemoveEntities(list)
 		end
 	end)
 
 	-- Hook: Player spawned a swep
 	hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
+		local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, weapons, false)
+
+		-- Set the player as the entity creator
+		timer.Simple(staticDelays.waitForFilteredResults, function()
+			for _,ent in ipairs(list) do
+				if ent:GetCreationTime() - CurTime() <= 0.2 then
+					ent:SetCreator(ply)
+				end
+			end
+		end)
+
 		-- Clean up player's items
 		if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
-			RemoveEntities(GetFiltered(Vector (ply:GetEyeTrace().HitPos), radius.small, weapons, false))
+			RemoveEntities(list)
 		end
 	end)
 end
