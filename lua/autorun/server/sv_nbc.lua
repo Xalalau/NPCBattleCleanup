@@ -388,7 +388,10 @@ RemoveDecals()
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function NPCDeathEvent(npc, radius) 
+local function NPCDeathEvent(npc, radius)
+	-- Clear the Creator field, as we're using it to separate the player's things from the trash
+	npc:SetCreator(nil)
+
 	-- Deal with barnacles
 	-- Their state at dying remains 0, so I force it to 7, which is expected
 	if npc:GetClass() == "npc_barnacle" then
