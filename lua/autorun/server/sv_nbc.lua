@@ -568,48 +568,50 @@ hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
 end)
 
 -- SANDBOX DERIVED GAMEMODES:
-if GAMEMODE.IsSandboxDerived then
-	-- Hook: Player spawned a ragdoll
-	hook.Add("PlayerSpawnedRagdoll", "NBC_PlayerSpawnedRagdoll", function(ply, model, ragdoll)
-		-- Set the player as the entity creator
-		ragdoll:SetCreator(ply)
-	end)
+hook.Add("Initialize", "BS_Initialize", function()
+	if GAMEMODE.IsSandboxDerived then
+		-- Hook: Player spawned a ragdoll
+		hook.Add("PlayerSpawnedRagdoll", "NBC_PlayerSpawnedRagdoll", function(ply, model, ragdoll)
+			-- Set the player as the entity creator
+			ragdoll:SetCreator(ply)
+		end)
 
-	-- Hook: Player spawned a sent
-	hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
-		local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, items, false)
+		-- Hook: Player spawned a sent
+		hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
+			local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, items, false)
 
-		-- Set the player as the entity creator
-		timer.Simple(staticDelays.waitForFilteredResults, function()
-			for _,ent in ipairs(list) do
-				if ent:GetCreationTime() - CurTime() <= 0.2 then
-					ent:SetCreator(ply)
+			-- Set the player as the entity creator
+			timer.Simple(staticDelays.waitForFilteredResults, function()
+				for _,ent in ipairs(list) do
+					if ent:GetCreationTime() - CurTime() <= 0.2 then
+						ent:SetCreator(ply)
+					end
 				end
+			end)
+
+			-- Clean up player's weapons
+			if GetConVar("NBC_PlyPlacedItems"):GetBool() then
+				RemoveEntities(list)
 			end
 		end)
 
-		-- Clean up player's weapons
-		if GetConVar("NBC_PlyPlacedItems"):GetBool() then
-			RemoveEntities(list)
-		end
-	end)
+		-- Hook: Player spawned a swep
+		hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
+			local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, weapons, false)
 
-	-- Hook: Player spawned a swep
-	hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
-		local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), radius.small, weapons, false)
-
-		-- Set the player as the entity creator
-		timer.Simple(staticDelays.waitForFilteredResults, function()
-			for _,ent in ipairs(list) do
-				if ent:GetCreationTime() - CurTime() <= 0.2 then
-					ent:SetCreator(ply)
+			-- Set the player as the entity creator
+			timer.Simple(staticDelays.waitForFilteredResults, function()
+				for _,ent in ipairs(list) do
+					if ent:GetCreationTime() - CurTime() <= 0.2 then
+						ent:SetCreator(ply)
+					end
 				end
+			end)
+
+			-- Clean up player's items
+			if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
+				RemoveEntities(list)
 			end
 		end)
-
-		-- Clean up player's items
-		if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
-			RemoveEntities(list)
-		end
-	end)
-end
+	end
+end)
