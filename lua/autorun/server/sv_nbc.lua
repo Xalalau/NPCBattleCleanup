@@ -388,31 +388,40 @@ RemoveDecals()
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function NPCDeathEvent(npc, radius)
-	-- Clear the Creator field, as we're using it to separate the player's things from the trash
-	npc:SetCreator(nil)
+local function NPCDeathEvent(npc, class, pos, radius, isRechecking)
+	-- Attempt to remove contents created very late (by very long death animations/transitions)
+	if not isRechecking then
+		timer.Simple(3, function()
+			NPCDeathEvent(npc, class, pos, radius, true)
+		end)
+	end
 
-	-- Deal with barnacles
-	-- Their state at dying remains 0, so I force it to 7, which is expected
-	if npc:GetClass() == "npc_barnacle" then
-		npc:SetNPCState(7)
+	if npc:IsValid() then
+		-- Clear the Creator field, as we're using it to separate the player's things from the trash
+		npc:SetCreator(nil)
+
+		-- Deal with barnacles
+		-- Their state at dying remains 0, so I force it to 7, which is expected
+	 	if class == "npc_barnacle" then
+			npc:SetNPCState(7)
+		end
 	end
 
 	-- Clean up NPC's weapons
 	if GetConVar("NBC_NPCWeapons"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), radius, weapons, false))
+		RemoveEntities(GetFiltered(pos, radius, weapons, false))
 	end
 
 	-- Clean up NPC's items
 	if GetConVar("NBC_NPCItems"):GetBool() then
-		RemoveEntities(GetFiltered(npc:GetPos(), radius, items, false))
+		RemoveEntities(GetFiltered(pos, radius, items, false))
 	end
 
 	-- Clean up dead NPC's leftovers
 	if GetConVar("NBC_NPCLeftovers"):GetBool() and
 	   (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
 	
-		local list = GetFiltered(npc:GetPos(), radius, leftovers, true)
+		local list = GetFiltered(pos, radius, leftovers, true)
 
 		-- Deal with "prop_ragdoll_attached"
 		timer.Simple(staticDelays.waitForGameNewEntities, function()
@@ -424,7 +433,7 @@ local function NPCDeathEvent(npc, radius)
 		end)
 
 		-- Deal with turned turrets
-		if npc:GetClass() == "npc_turret_floor" then
+		if npc:IsValid() and class == "npc_turret_floor" then
 			npc:SetHealth(0)
 		end
 
@@ -457,7 +466,7 @@ local function NPCDeathEvent(npc, radius)
 
 		-- Deal with the gunships: they explode around 3.2s after killed, making it very difficult to detect
 		-- and remove their pieces. My solution is to avoid the explosion using a constant cleanup time
-		local extraDelay = npc:GetClass() == "npc_combinegunship" and 2 or false
+		local extraDelay = class == "npc_combinegunship" and 2 or false
 		
 		RemoveEntities(list, extraDelay)
 	end
@@ -465,7 +474,7 @@ local function NPCDeathEvent(npc, radius)
 	-- Clean up dead NPC's debris
 	if GetConVar("NBC_NPCDebris"):GetBool() then
 		-- Deal with combibe helicopters: they drop debris long before they die all over the map
-		local list = GetFiltered(npc:GetPos(), radius, debris, false, true)
+		local list = GetFiltered(pos, radius, debris, false, true)
 
 		-- Deal with "prop_physics": their creation time must be almost instant
 		timer.Simple(staticDelays.waitForFilteredResults, function()
@@ -479,7 +488,7 @@ local function NPCDeathEvent(npc, radius)
 		end)
 
 		-- Deal with combibe helicopters: they drop debris long before they die all over the map
-		if npc:GetClass() == "npc_helicopter" then
+		if class == "npc_helicopter" then
 			timer.Simple(6.5, function()
 				RemoveEntities(GetFiltered(Vector(0,0,0), radius, { "gib" }, false, true))
 			end)
@@ -489,7 +498,7 @@ local function NPCDeathEvent(npc, radius)
 	end
 
 	-- Clean up corpses
-	if GetConVar("NBC_NPCCorpses"):GetBool() and
+	if npc:IsValid() and GetConVar("NBC_NPCCorpses"):GetBool() and
 	   (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
 		-- Deal with burning corpses:
 		-- Since I wasn't able to extinguish the fire because the game functions
@@ -508,7 +517,7 @@ end
 
 -- Hook: NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-	NPCDeathEvent(npc, radius.normal) 
+	NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), radius.normal) 
 end)
 
 -- Hook: NPC damaged
@@ -519,7 +528,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
 			-- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
 			timer.Simple(0.001, function()
 				if npc:Health() <= 0 then
-					NPCDeathEvent(npc, npc:GetClass() == "npc_helicopter" and radius.map or radius.normal)
+					NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and radius.map or radius.normal)
 				end
 			end)
 		end
@@ -558,7 +567,7 @@ end)
 hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 	-- Barnacles create prop_ragdoll_attached
 	if ent:GetClass() == "prop_ragdoll_attached" then
-		NPCDeathEvent(ent, radius.map)
+		NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), radius.map)
 	end
 end)
 
