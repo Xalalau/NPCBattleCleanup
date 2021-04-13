@@ -580,7 +580,7 @@ hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
 end)
 
 -- SANDBOX DERIVED GAMEMODES:
-hook.Add("Initialize", "BS_Initialize", function()
+hook.Add("InitPostEntity", "BS_Initialize", function()
 	if GAMEMODE.IsSandboxDerived then
 		-- Hook: Player spawned a ragdoll
 		hook.Add("PlayerSpawnedRagdoll", "NBC_PlayerSpawnedRagdoll", function(ply, model, ragdoll)
