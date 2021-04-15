@@ -557,7 +557,7 @@ hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
 				--* Override hook - NBC_PlayerDisconnectedBypass
 				--? The ability to override the removal of NPCs, if some addons do not require it
 				if not ent:GetOwner():IsValid() and not hook.Run('NBC_PlayerDisconnectedBypass', ent) then
-					ent:TakeDamage(999999, ent, ent)
+					ent:Remove()
 				end
 			end
 		end
