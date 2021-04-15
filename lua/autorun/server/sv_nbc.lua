@@ -554,7 +554,9 @@ hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
 	if GetConVar("NBC_DisconnectionCleanup"):GetBool() then
 		for _,ent in ipairs(ents.GetAll()) do
 			if ent and IsValid(ent) and ent:IsValid() and ent:GetOwner() and ent:IsNPC() then
-				if not ent:GetOwner():IsValid() then
+				--* Override hook - NBC_PlayerDisconnectedBypass
+				--? The ability to override the removal of NPCs, if some addons do not require it
+				if not ent:GetOwner():IsValid() and not hook.Run('NBC_PlayerDisconnectedBypass', ent) then
 					ent:TakeDamage(999999, ent, ent)
 				end
 			end
