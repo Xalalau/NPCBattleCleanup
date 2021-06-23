@@ -223,7 +223,7 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
 
 	timer.Simple(staticDelays.waitToStartFiltering, function()
 		local foundEntities = inRadius == radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
-	
+
 		for k,v in pairs(foundEntities) do
 			local isEntityValid = false
 			local isTypeValid = classes ~= weapons and classes ~= items or 
@@ -568,7 +568,7 @@ end)
 --   Note: many entities from dead NPCs/players don't appear here
 hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 	-- Barnacles create prop_ragdoll_attached
-	if ent:GetClass() == "prop_ragdoll_attached" then
+	if ent:IsValid() and ent:GetClass() == "prop_ragdoll_attached" then
 		NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), radius.map)
 	end
 end)
@@ -576,7 +576,7 @@ end)
 -- Hook: Player dropped weapon using Lua
 hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
 	-- Clean up weapons dropped by live players
-	if GetConVar("NBC_LivePlyDroppedWeapons"):GetBool() then 
+	if GetConVar("NBC_LivePlyDroppedWeapons"):GetBool() and ply:IsValid() then 
 		RemoveEntities(GetFiltered(ply:GetPos(), radius.normal, weapons, false))
 	end
 end)
@@ -597,7 +597,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 			-- Set the player as the entity creator
 			timer.Simple(staticDelays.waitForFilteredResults, function()
 				for _,ent in ipairs(list) do
-					if ent:GetCreationTime() - CurTime() <= 0.2 then
+					if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
 						ent:SetCreator(ply)
 					end
 				end
@@ -616,7 +616,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 			-- Set the player as the entity creator
 			timer.Simple(staticDelays.waitForFilteredResults, function()
 				for _,ent in ipairs(list) do
-					if ent:GetCreationTime() - CurTime() <= 0.2 then
+					if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
 						ent:SetCreator(ply)
 					end
 				end
