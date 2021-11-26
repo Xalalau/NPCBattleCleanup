@@ -27,6 +27,7 @@ local radius = {
 local lastFadingDelay
 
 local staticDelays = {
+	removeThrowables = 2,
 	restoreGRagdollMaxcount = 0.4,
 	waitBurningCorpse = 7.5, -- GMod fixed value
 	fading = {
@@ -132,6 +133,8 @@ local debris = { -- Search for substrings
 	"prop_physics",
 	"npc_helicoptersensor",
 	"helicopter_chunk"
+}
+local throwables = { -- Search for substrings
 }
 
 --[[
@@ -273,18 +276,20 @@ local function IsRemovable(ent)
 	if IsValid(ent) then -- Valid entity
 		if not ent.doNotRemove then -- Not set to not be removed
 			if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by the player
-				if ent:IsWeapon() and GetConVar("NBC_PlyPlacedWeapons"):GetBool() or -- a weapon with NBC_PlyWeapons turned off
-                   not ent:IsWeapon() and not ent:IsRagdoll() and GetConVar("NBC_PlyPlacedItems"):GetBool() -- a sent with NBC_PlyItems turned off
+				if ent.isThrowable or -- Thrown entities
+				   ent:IsWeapon() and GetConVar("NBC_PlyPlacedWeapons"):GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
+                   not ent:IsWeapon() and not ent:IsRagdoll() and GetConVar("NBC_PlyPlacedItems"):GetBool() -- A sent with NBC_PlyPlacedItems turned on
 					then
 
 					return true
 			   end
 			elseif not IsValid(ent:GetOwner()) or -- Nil owner
-				not ent:GetOwner():IsValid() or -- Uninitialized owner
-				not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() or -- Not owned by a player or NPC
-				ent:GetOwner():Health() <= 0 then -- The owner is dead
+				   not ent:GetOwner():IsValid() or -- Uninitialized owner
+				   not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() or -- Not owned by a player or NPC
+				   ent:GetOwner():Health() <= 0 -- The owner is dead
+					then
 
-				return true
+					return true
 			end
 		end
 	end
@@ -386,6 +391,19 @@ local function RemoveDecals()
 	end)
 end
 RemoveDecals()
+
+-- Remove thrown entities
+local function RemoveThrowable(ent)
+	for _, class in pairs(throwables) do
+		if ent:GetClass() == class then
+			timer.Simple(staticDelays.removeThrowables, function()
+				ent.isThrowable = true
+				ent:SetCreator(player.GetHumans()[1])
+				RemoveEntities({ ent })
+			end)
+		end
+	end
+end
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
@@ -568,9 +586,13 @@ end)
 -- Hook: Entity Created
 --   Note: many entities from dead NPCs/players don't appear here
 hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
-	-- Barnacles create prop_ragdoll_attached
-	if ent:IsValid() and ent:GetClass() == "prop_ragdoll_attached" then
-		NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), radius.map)
+	if ent:IsValid() then
+		RemoveThrowable(ent)
+
+		-- Barnacles create prop_ragdoll_attached
+		if ent:GetClass() == "prop_ragdoll_attached" then
+			NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), radius.map)
+		end
 	end
 end)
 
