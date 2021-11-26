@@ -73,11 +73,12 @@ local weapons = { -- Search for substrings
 	"gmod_camera",
 	"manhack_welder",
 	-- Addons:
-	"tfa_",     -- TFA Base
-	"m9k_",     -- M9K Specialties
-	"cw_",      -- Customizable Weaponry 2.0
-	"arccw_",   -- Arctic's Customizable Weapons
-	"vj_"       -- VJ Base
+	"tfa_",      -- TFA Base
+	"m9k_",      -- M9K Specialties
+	"cw_",       -- Customizable Weaponry 2.0
+	"arccw_",    -- Arctic's Customizable Weapons
+	"vj_",       -- VJ Base
+	"meleearts"  -- Melee Arts 2
 }
 local weapons_base = { -- Search for perfect matches
 	-- Addons:
