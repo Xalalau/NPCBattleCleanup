@@ -41,7 +41,7 @@ local function NBC_Menu(CPanel)
 
 	options = {
 		NBC_Decals = 1,
-		NBC_DisconnectionCleanup = 1,
+		NBC_DisconnectionCleanup = 0,
 		NBC_LivePlyDroppedWeapons = 1,
 		NBC_GModKeepCorpses = 1,
 		NBC_NPCCorpses = 1,
