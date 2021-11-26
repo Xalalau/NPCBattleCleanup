@@ -135,6 +135,7 @@ local debris = { -- Search for substrings
 	"helicopter_chunk"
 }
 local throwables = { -- Search for substrings
+	"meleeartsthrowable" -- Melee Arts 2
 }
 
 --[[
