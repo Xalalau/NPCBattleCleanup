@@ -78,6 +78,7 @@ local weapons = { -- Search for substrings
 	"m9k_",      -- M9K Specialties
 	"cw_",       -- Customizable Weaponry 2.0
 	"arccw_",    -- Arctic's Customizable Weapons
+	"arc9_",    -- ARC9 Weapon Base
 	"vj_",       -- VJ Base
 	"meleearts"  -- Melee Arts 2
 }
