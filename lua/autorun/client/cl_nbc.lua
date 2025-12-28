@@ -54,10 +54,6 @@ local function NBC_Menu(CPanel)
         -- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
 
         delayComboBox:SetText((data["NBC_DelayScale"] == "1" or data["nbc_delayscale"] == 1) and "Second(s)" or "Minute(s)")
-        
-        if data["NBC_FadingTime"] or data["nbc_fadingtime"] then -- This hole line avoids script errors with older addon versions. TODO: Remove it after a year or so.
-            fadingComboBox:SetText(data["NBC_FadingTime"] or data["nbc_fadingtime"])
-        end
     end
 
     CPanel:Help("")
