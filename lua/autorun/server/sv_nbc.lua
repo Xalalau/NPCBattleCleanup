@@ -162,6 +162,8 @@ net.Receive("NBC_UpdateCVar", function(_, ply)
         local command = net.ReadString()
         local value = net.ReadString()
 
+        if NBC.CVarDefaults[command] == nil then return end
+
         if value == "true" then
             value = "1"
         elseif value == "false" then
