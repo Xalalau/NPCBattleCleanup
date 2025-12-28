@@ -1,4 +1,4 @@
--- Namespace
+-- Namespace table
 NBC = {
     CVar = {},
     CVarDefaults = {
@@ -36,20 +36,21 @@ for name, def_value in pairs(NBC.CVarDefaults) do
 end
 
 if CLIENT then
+    -- Client-side: menu initialization flag
     NBC.IsMenuInitialized = false
 end
 
 if SERVER then
-    -- Libs
+    -- Server-side utilities
     NBC.Util = {}
 
-    NBC.gRagMax = nil -- Last registered g_ragdoll_maxcount 
+    NBC.gRagMax = nil -- Last recorded g_ragdoll_maxcount 
 
     NBC.lastCleanupDelay = {
-        waiting = false, -- If we're waiting for a cleanup order
-        value, -- Current delay
+        waiting = false, -- Whether a cleanup is scheduled
+        value, -- Current delay value
         scale = {
-            1, -- Current scale
+            1, -- Current scale multiplier
             "", -- Name of the corpses cleanup timer
             "" -- Name of the entities cleanup timer
         }
@@ -69,7 +70,7 @@ if SERVER then
         restoreGRagdollMaxcount = 0.4,
         waitBurningCorpse = 7.5, -- GMod fixed value
         fading = {
-            -- The max fading effect delay is unlimited for sents but only 4s for corpses
+            -- The max fading effect delay is unlimited for scripted entities but only 4s for corpses
             ["Fast"] = {
                 delay = 0.005,
                 gRagdollFadespeed = 3000
@@ -85,15 +86,15 @@ if SERVER then
         }
     }
 
-    -- The minimum time that the game needs to create new entities after a NPC dies
+    -- Minimum time the game needs to create new entities after an NPC dies
     NBC.staticDelays.waitForGameNewEntities = 0.05
-    -- Start filtering entities an instant after the game is ready. It makes it possible to do any extra preparations in the meantime
+    -- Begin filtering entities shortly after the game is ready to allow extra setup
     NBC.staticDelays.waitToStartFiltering = NBC.staticDelays.waitForGameNewEntities + 0.01
-    -- The minimum time before using the filtered results list. If we access it too fast, we may end up with an incomplete table
+    -- Minimum time before using filtered results to avoid incomplete tables
     NBC.staticDelays.waitForFilteredResults = NBC.staticDelays.waitToStartFiltering + 0.03
 
-    -- Workaround to detected NPC deaths that aren't reported in the "OnNPCKilled" hook
-    NBC.deathsDetectedByDamage = { -- Search for perfect matches
+    -- Workaround to detect NPC deaths that aren't reported to the "OnNPCKilled" hook
+    NBC.deathsDetectedByDamage = { -- Exact-match NPC class names
         -- Default:
         "npc_combinegunship",
         "npc_helicopter",
@@ -101,10 +102,10 @@ if SERVER then
     }
 
     -- Lists of entities to remove
-    -- Note: the entities won't be removed if they aren't caught by these filters
-    -- Note2: I also try to get entities by Base because it's common for several addons to don't follow name patterns
+    -- Note: entities won't be removed unless they match these filters
+    -- Note2: some addons use Base class names instead of predictable class name patterns
 
-    NBC.weapons = { -- Search for substrings
+    NBC.weapons = { -- Match substrings in class names
         -- Default:
         "weapon_",
         "ai_weapon_",
@@ -116,12 +117,12 @@ if SERVER then
         "m9k_",      -- M9K Specialties
         "cw_",       -- Customizable Weaponry 2.0
         "arccw_",    -- Arctic's Customizable Weapons
-        "arc9_",    -- ARC9 Weapon Base
+        "arc9_",     -- ARC9 Weapon Base
         "vj_",       -- VJ Base
         "meleearts"  -- Melee Arts 2
     }
 
-    NBC.weaponsBase = { -- Search for perfect matches
+    NBC.weaponsBase = { -- Exact-match Base class names
         -- Addons:
         "tfa_gun_base", -- TFA
         "arccw_base", -- ArcCW
@@ -136,7 +137,7 @@ if SERVER then
         "weapon_vj_base" -- VJ
     }
 
-    NBC.items = { -- Search for substrings
+    NBC.items = { -- Match substrings in class names
         -- Default:
         "item_",
         "npc_grenade_",
@@ -144,14 +145,14 @@ if SERVER then
         "vj_" -- VJ
     }
 
-    NBC.itemsBase = { -- Search for perfect matches
+    NBC.itemsBase = { -- Exact-match Base class names
         -- Addons:
         "arccw_att_base", -- ArcCW
         "cw_attpack_base", -- CW2
         "cw_ammo_ent_base" -- CW2
     }
 
-    NBC.leftovers = { -- Search for perfect matches
+    NBC.leftovers = { -- Exact-match class names
         -- Default:
         "prop_ragdoll",
         "prop_ragdoll_attached",
@@ -163,7 +164,7 @@ if SERVER then
         "npc_combine_camera"
     }
 
-    NBC.leftoversBase = { -- Search for perfect matches
+    NBC.leftoversBase = { -- Exact-match Base class names
         -- Addons:
         "npc_vj_animal_base", -- VJ
         "npc_vj_creature_base", -- VJ
@@ -172,7 +173,7 @@ if SERVER then
         "npc_vj_tankg_base" -- VJ
     }
 
-    NBC.debris = { -- Search for substrings
+    NBC.debris = { -- Match substrings in class names
         -- Default:
         "gib",
         "prop_physics",
@@ -180,18 +181,20 @@ if SERVER then
         "helicopter_chunk"
     }
 
-    NBC.Throwables = { -- Search for substrings
+    NBC.Throwables = { -- Match substrings in class names
         "meleeartsthrowable" -- Melee Arts 2
     }
 
     --[[
-        By default, I process NPC deaths waiting for the game to make some changes to check them later
+        By default, NPC death processing waits briefly for the game to make related changes
+        before we check the results.
 
-        e.g. "prop_ragdoll_attached" is like this:
-            Barnacles immediately turn the victims into a prop_ragdoll_attached and go through the OnEntityCreated hook
-            Striders impaled NPCs go through OnNPCKilled hook with their original classes and turn into prop_ragdoll_attached some frame later
+        Example: "prop_ragdoll_attached"
+            - Barnacles immediately convert victims into prop_ragdoll_attached and trigger OnEntityCreated
+            - Striders report the original NPC class in OnNPCKilled and convert to prop_ragdoll_attached a frame later
 
-        So it's clear that sometimes I need to wait to get the right results. This is how most kills with entities creation work.
+        Therefore, we sometimes need to wait a short time to get accurate results.
+        This handles most deaths that spawn or transform entities.
     --]]
 end
 
@@ -203,7 +206,7 @@ if SERVER then
 end
 
 hook.Add("InitPostEntity", "NBC_sh_init", function()
-    -- SANDBOX DERIVED GAMEMODES:
+    -- Only run in sandbox-derived gamemodes
     if not GAMEMODE.IsSandboxDerived then return end
 
     if SERVER then

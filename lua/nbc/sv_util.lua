@@ -1,4 +1,4 @@
--- Adjust the current running timers to match new configurations
+-- Adjust currently running timers to match the new configurations
 -- "Cleanup Delay" & "Fading Speed"
 function NBC.Util.UpdateConfigurations()
     if NBC.lastFadingDelay ~= NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].delay then
@@ -12,16 +12,16 @@ function NBC.Util.UpdateConfigurations()
     if NBC.lastCleanupDelay.scale[1] ~= NBC.CVar.nbc_delay_scale:GetFloat() or
        NBC.lastCleanupDelay.value ~= NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat() then
 
-        -- Update the stored states
+        -- Update stored state
         NBC.lastCleanupDelay.scale[1] = NBC.CVar.nbc_delay_scale:GetFloat()
         NBC.lastCleanupDelay.value = NBC.CVar.nbc_delay:GetFloat() * NBC.lastCleanupDelay.scale[1]
 
-        -- Clear the waiting for a cleanup order
+        -- Clear the waiting-for-cleanup flag
         if NBC.lastCleanupDelay.waiting then
             NBC.lastCleanupDelay.waiting = false
         end
 
-        -- Remove an older cleanup order if it exists
+        -- Remove any existing cleanup timers
         if timer.Exists(NBC.lastCleanupDelay.scale[2]) then
             timer.Remove(NBC.lastCleanupDelay.scale[2])
         end
@@ -31,7 +31,7 @@ function NBC.Util.UpdateConfigurations()
     end
 end
 
--- Detect weapons and items from selected weapon bases
+-- Detect whether an entity uses one of the specified base classes
 function NBC.Util.IsValidBase(base, ent)
     if ent.Base then
         for k, name in pairs(base) do
@@ -44,9 +44,9 @@ function NBC.Util.IsValidBase(base, ent)
     return false
 end
 
--- Find entities inside a sphere with the given classes
--- No classes = return every entity inside the radius
--- radius = NBC.radius.map will force the filter to check the hole map
+-- Find entities within a sphere that match the given classes
+-- If classes is nil, return every entity inside the radius
+-- radius = NBC.radius.map forces scanning the whole map
 function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly, scanEverything)
     local entList = {}
     local base = classes == NBC.items and NBC.itemsBase or 
@@ -60,13 +60,13 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
             local isEntityValid = false
             local isTypeValid = classes ~= NBC.weapons and classes ~= NBC.items or 
                                 classes == NBC.weapons and ent:IsWeapon() or
-                                classes == NBC.items and ent:IsSolid() and not ent:IsWeapon() and not ent:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
+                                classes == NBC.items and ent:IsSolid() and not ent:IsWeapon() and not ent:IsPlayer() and -- Attempt to isolate items to avoid deleting unrelated entities
                                            not ent:IsNPC() and not ent:IsRagdoll() and not ent:IsNextBot() and
                                            not ent:IsVehicle() and not ent:IsWidget()
 
-            -- Is it a generic valid detection? corpse/dedris/leftover or weapon/item
+            -- Check if entity is a valid corpse/debris/leftover or weapon/item
             if ent:Health() <= 0 and isTypeValid then
-                -- Is the detected entity from a valid class or the base?
+                -- Check if detected entity matches any requested class or the base
                 if not classes then
                     isEntityValid = true
                 else
@@ -81,14 +81,14 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
                 end
             end
 
-            -- if it's a valid entity...
+            -- If the entity is valid...
             if isEntityValid then
-                -- It's ownerless: get it
+                -- If ownerless, include it
                 if not IsValid(ent:GetOwner()) or not ent:GetOwner():IsValid() or scanEverything and not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() then
                     table.insert(entList, ent)
-                -- It's owned by a player: skip it
+                -- If owned by a player, skip it
                 elseif ent:GetOwner():IsPlayer() then
-                -- It's owned by a NPC: get it if the NPC is dead
+                -- If owned by an NPC, include it only if the NPC is dead
                 elseif ent:GetOwner().GetNPCState and ent:GetOwner():GetNPCState() == 7 then
                     table.insert(entList, ent)
                 end
@@ -105,14 +105,14 @@ function NBC.Util.SetRemovable(ent, value)
     ent.doNotRemove = value
 end
 
--- Check if we can remove an entity
+-- Return whether an entity may be removed
 function NBC.Util.IsRemovable(ent)
-    if IsValid(ent) then -- Valid entity
-        if not ent.doNotRemove then -- Not set to not be removed
-            if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by the player
+    if IsValid(ent) then -- Entity is valid
+        if not ent.doNotRemove then -- Not marked as doNotRemove
+            if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by a player
                 if ent.isThrowable or -- Thrown entities
-                   ent:IsWeapon() and NBC.CVar.nbc_ply_placed_weapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
-                   not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.nbc_ply_placed_items:GetBool() -- A sent with NBC_PlyPlacedItems turned on
+                   ent:IsWeapon() and NBC.CVar.nbc_ply_placed_weapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons enabled
+                   not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.nbc_ply_placed_items:GetBool() -- A sent (entity) with NBC_PlyPlacedItems enabled
                     then
 
                     return true

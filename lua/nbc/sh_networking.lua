@@ -2,7 +2,7 @@ if SERVER then
     util.AddNetworkString("NBC_UpdateFadingTime")
     util.AddNetworkString("NBC_UpdateCVar")
 
-    -- Receive convar update
+    -- Handle convar update requests from clients
     net.Receive("NBC_UpdateCVar", function(_, ply)
         if ply and ply:IsAdmin() then
             local command = net.ReadString()
@@ -22,12 +22,12 @@ if SERVER then
 end
 
 if CLIENT then
-    -- Update ragdoll fading speed/time
+    -- Apply updated ragdoll fade speed
     net.Receive("NBC_UpdateFadingTime", function()
         RunConsoleCommand("g_ragdoll_fadespeed", net.ReadString())
     end)
 
-    -- Run commands on the server
+    -- Send cvar updates to the server
     function NBC.Net.SendToServer(command, value)
         if not NBC.IsMenuInitialized then return end
 
@@ -37,7 +37,7 @@ if CLIENT then
         net.SendToServer()
     end
 
-    -- Run slider commands on the server
+    -- Debounce slider updates before sending to the server
     function NBC.Net.SendSliderToServer(command, value)
         if timer.Exists("NBC_SliderSend") then
             timer.Destroy("NBC_SliderSend")
