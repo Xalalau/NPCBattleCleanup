@@ -619,7 +619,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
         -- Hook: Player spawned a sent
         hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
-            local entList = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _ITEMS, false)
+            local entList = GetFiltered(ply:GetEyeTrace().HitPos, _RADIUS.small, _ITEMS, false)
 
             -- Set the player as the entity creator
             timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
@@ -638,7 +638,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
         -- Hook: Player spawned a swep
         hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
-            local entList = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _WEAPONS, false)
+            local entList = GetFiltered(ply:GetEyeTrace().HitPos, _RADIUS.small, _WEAPONS, false)
 
             -- Set the player as the entity creator
             timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
