@@ -5,7 +5,7 @@ function NBC.RemoveEntities(entList, fixedDelay)
     timer.Simple(NBC.staticDelays.waitForFilteredResults, function()
         -- Remove the selected entities with a new cleanup order
         if #entList > 0 then
-            local name = tostring(math.random(1, 9000000)) .. "re2"
+            local timerName = tostring(entList)
             local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
 
             -- Adjustments
@@ -13,10 +13,10 @@ function NBC.RemoveEntities(entList, fixedDelay)
 
             -- Store the current state
             NBC.lastCleanupDelay.value = delay
-            NBC.lastCleanupDelay.scale[3] = name
+            NBC.lastCleanupDelay.scale[3] = timerName
 
             -- Remove the entities with a fading effect
-            timer.Create(name, fixedDelay or delay, 1, function()
+            timer.Create(timerName, fixedDelay or delay, 1, function()
                 for k, ent in pairs(entList) do
                     if NBC.Util.IsRemovable(ent) then
                         local hookName = tostring(ent)
