@@ -152,7 +152,7 @@ local THROWABLES = { -- Search for substrings
 -- Update fading time on new players
 hook.Add("PlayerInitialSpawn", "NBC_Initialize", function(ply)
     net.Start("NBC_UpdateFadingTime")
-        net.WriteString(tostring(STATIC_DELAYS.fading[GetConVar("NBC_FadingTime"):GetString()].gRagdollFadespeed))
+        net.WriteString(tostring(STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].gRagdollFadespeed))
     net.Send(ply)
 end)
 
@@ -188,20 +188,20 @@ end
 -- Adjust the current running timers to match new configurations
 -- "Cleanup Delay" & "Fading Speed"
 local function UpdateConfigurations()
-    if LAST_FADING_DELAY ~= STATIC_DELAYS.fading[GetConVar("NBC_FadingTime"):GetString()].delay then
-       LAST_FADING_DELAY = STATIC_DELAYS.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+    if LAST_FADING_DELAY ~= STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay then
+       LAST_FADING_DELAY = STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay
 
         net.Start("NBC_UpdateFadingTime")
-            net.WriteString(tostring(STATIC_DELAYS.fading[GetConVar("NBC_FadingTime"):GetString()].gRagdollFadespeed))
+            net.WriteString(tostring(STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].gRagdollFadespeed))
         net.Broadcast()
     end
 
-    if LAST_CLEANUP_DELAY.scale[1] ~= GetConVar("NBC_DelayScale"):GetFloat() or
-       LAST_CLEANUP_DELAY.value ~= GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat() then
+    if LAST_CLEANUP_DELAY.scale[1] ~= NBC.CVar.NBC_DelayScale:GetFloat() or
+       LAST_CLEANUP_DELAY.value ~= NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat() then
 
         -- Update the stored states
-        LAST_CLEANUP_DELAY.scale[1] = GetConVar("NBC_DelayScale"):GetFloat()
-        LAST_CLEANUP_DELAY.value = GetConVar("NBC_Delay"):GetFloat() * LAST_CLEANUP_DELAY.scale[1]
+        LAST_CLEANUP_DELAY.scale[1] = NBC.CVar.NBC_DelayScale:GetFloat()
+        LAST_CLEANUP_DELAY.value = NBC.CVar.NBC_Delay:GetFloat() * LAST_CLEANUP_DELAY.scale[1]
 
         -- Clear the waiting for a cleanup order
         if LAST_CLEANUP_DELAY.waiting then
@@ -279,8 +279,8 @@ local function IsRemovable(ent)
         if not ent.doNotRemove then -- Not set to not be removed
             if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by the player
                 if ent.isThrowable or -- Thrown entities
-                   ent:IsWeapon() and GetConVar("NBC_PlyPlacedWeapons"):GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
-                   not ent:IsWeapon() and not ent:IsRagdoll() and GetConVar("NBC_PlyPlacedItems"):GetBool() -- A sent with NBC_PlyPlacedItems turned on
+                   ent:IsWeapon() and NBC.CVar.NBC_PlyPlacedWeapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
+                   not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.NBC_PlyPlacedItems:GetBool() -- A sent with NBC_PlyPlacedItems turned on
                     then
 
                     return true
@@ -307,7 +307,7 @@ local function RemoveEntities(list, fixedDelay)
         -- Remove the selected entities with a new cleanup order
         if #list > 0 then
             local name = tostring(math.random(1, 9000000)) .. "re2"
-            local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
+            local delay = NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat()
 
             -- Adjustments
             UpdateConfigurations()
@@ -321,7 +321,7 @@ local function RemoveEntities(list, fixedDelay)
                 for k,v in pairs(list) do
                     if IsRemovable(v) then
                         local hookName = tostring(v)
-                        local fadingTime = fixedDelay and 0.6 or STATIC_DELAYS.fading[GetConVar("NBC_FadingTime"):GetString()].delay
+                        local fadingTime = fixedDelay and 0.6 or STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay
                         local maxTime = CurTime() + fadingTime
 
                         v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work with custom weapon bases
@@ -346,7 +346,7 @@ end
 
 -- Remove NPC corpses
 local function RemoveCorpses(identifier, noDelay)
-    local currentGRagMax =  GetConVar("g_ragdoll_maxcount"):GetInt()
+    local currentGRagMax =  NBC.CVar.g_ragdoll_maxcount:GetInt()
     identifier = tostring(identifier)
 
     -- Keep the g_ragdoll_maxcount value safely stored
@@ -360,7 +360,7 @@ local function RemoveCorpses(identifier, noDelay)
     -- Remove the corpses on the ground with a new cleanup order
     if not LAST_CLEANUP_DELAY.waiting and currentGRagMax ~= 0 then
         local name = "AutoRemoveCorpses"..identifier
-        local delay = GetConVar("NBC_Delay"):GetFloat() * GetConVar("NBC_DelayScale"):GetFloat()
+        local delay = NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat()
         LAST_CLEANUP_DELAY.waiting = true
 
         -- Store the current state
@@ -383,7 +383,7 @@ end
 -- Remove decals of blood, explosions, gunshots and others
 local function RemoveDecals()
     timer.Create("nbc_autoremovedecals", 60, 0, function()
-        if GetConVar("NBC_Decals"):GetBool() then
+        if NBC.CVar.NBC_Decals:GetBool() then
             for k,ply in ipairs(player.GetHumans()) do
                 if ply and IsValid(ply) and ply:IsValid() then
                     ply:ConCommand("r_cleardecals")
@@ -429,18 +429,18 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up NPC's weapons
-    if GetConVar("NBC_NPCWeapons"):GetBool() then
+    if NBC.CVar.NBC_NPCWeapons:GetBool() then
         RemoveEntities(GetFiltered(pos, RADIUS, WEAPONS, false))
     end
 
     -- Clean up NPC's items
-    if GetConVar("NBC_NPCItems"):GetBool() then
+    if NBC.CVar.NBC_NPCItems:GetBool() then
         RemoveEntities(GetFiltered(pos, RADIUS, ITEMS, false))
     end
 
     -- Clean up dead NPC's leftovers
-    if GetConVar("NBC_NPCLeftovers"):GetBool() and
-       (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
+    if NBC.CVar.NBC_NPCLeftovers:GetBool() and
+       (NBC.CVar.NBC_GModKeepCorpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
     
         local list = GetFiltered(pos, RADIUS, LEFTOVERS, true)
 
@@ -493,7 +493,7 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up dead NPC's debris
-    if GetConVar("NBC_NPCDebris"):GetBool() then
+    if NBC.CVar.NBC_NPCDebris:GetBool() then
         -- Deal with combibe helicopters: they drop debris long before they die all over the map
         local list = GetFiltered(pos, RADIUS, DEBRIS, false, true)
 
@@ -519,8 +519,8 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up corpses
-    if npc:IsValid() and GetConVar("NBC_NPCCorpses"):GetBool() and
-       (GetConVar("NBC_GModKeepCorpses"):GetBool() or not GetConVar("ai_serverragdolls"):GetBool()) then
+    if npc:IsValid() and NBC.CVar.NBC_NPCCorpses:GetBool() and
+       (NBC.CVar.NBC_GModKeepCorpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
         -- Deal with burning corpses:
         -- Since I wasn't able to extinguish the fire because the game functions
         -- were buggy and very closed, I just wait until the corpses finish burning
@@ -559,12 +559,12 @@ end)
 -- Hook: Player killed
 hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
     -- Clean up player's items
-    if GetConVar("NBC_PlyItems"):GetBool() then
+    if NBC.CVar.NBC_PlyItems:GetBool() then
         RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, ITEMS, false))
     end
 
     -- Clean up player's weapons
-    if GetConVar("NBC_PlyWeapons"):GetBool() then 
+    if NBC.CVar.NBC_PlyWeapons:GetBool() then 
         RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, WEAPONS, false))
     end
 end)
@@ -572,7 +572,7 @@ end)
 -- Hook: Player Disconnected
 hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
     -- Kill all live NPCs from disconnected players
-    if GetConVar("NBC_DisconnectionCleanup"):GetBool() then
+    if NBC.CVar.NBC_DisconnectionCleanup:GetBool() then
         for _,ent in ipairs(ents.GetAll()) do
             if ent and IsValid(ent) and ent:IsValid() and ent:GetOwner() and ent:IsNPC() then
                 --* Override hook - NBC_PlayerDisconnectedBypass
@@ -601,7 +601,7 @@ end)
 -- Hook: Player dropped weapon using Lua
 hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
     -- Clean up weapons dropped by live players
-    if GetConVar("NBC_LivePlyDroppedWeapons"):GetBool() and ply:IsValid() then 
+    if NBC.CVar.NBC_LivePlyDroppedWeapons:GetBool() and ply:IsValid() then 
         RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, WEAPONS, false))
     end
 end)
@@ -629,7 +629,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
             end)
 
             -- Clean up player's weapons
-            if GetConVar("NBC_PlyPlacedItems"):GetBool() then
+            if NBC.CVar.NBC_PlyPlacedItems:GetBool() then
                 RemoveEntities(list)
             end
         end)
@@ -648,7 +648,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
             end)
 
             -- Clean up player's items
-            if GetConVar("NBC_PlyPlacedWeapons"):GetBool() then 
+            if NBC.CVar.NBC_PlyPlacedWeapons:GetBool() then 
                 RemoveEntities(list)
             end
         end)
