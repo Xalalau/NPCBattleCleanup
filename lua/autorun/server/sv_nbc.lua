@@ -411,11 +411,11 @@ end
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
+local function NPCDeathEvent(npc, attacker, class, pos, _RADIUS, isRechecking)
     -- Attempt to remove contents created very late (by very long death animations/transitions)
     if not isRechecking then
         timer.Simple(3, function()
-            NPCDeathEvent(npc, class, pos, _RADIUS, true)
+            NPCDeathEvent(npc, attacker, class, pos, _RADIUS, true)
         end)
     end
 
@@ -540,7 +540,7 @@ end
 
 -- Hook: NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), _RADIUS.normal) 
+    NPCDeathEvent(npc, attacker, npc:GetClass(), npc:GetPos(), _RADIUS.normal) 
 end)
 
 -- Hook: NPC damaged
@@ -551,7 +551,7 @@ hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo
             -- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
             timer.Simple(0.001, function()
                 if npc:Health() <= 0 then
-                    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and _RADIUS.map or _RADIUS.normal)
+                    NPCDeathEvent(npc, dmginfo:GetAttacker(), npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and _RADIUS.map or _RADIUS.normal)
                 end
             end)
         end
@@ -595,7 +595,7 @@ hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 
         -- Barnacles create prop_ragdoll_attached
         if ent:GetClass() == "prop_ragdoll_attached" then
-            NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), _RADIUS.map)
+            NPCDeathEvent(ent, nil, ent:GetClass(), ent:GetPos(), _RADIUS.map)
         end
     end
 end)
