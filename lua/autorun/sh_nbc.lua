@@ -22,7 +22,8 @@ NBC = {
         nbc_delay = 2,
         nbc_delay_scale = 1
     },
-    CVar = {}
+    CVar = {},
+    dataDir = "nbc"
 }
 
 for name, def_value in pairs(NBC.CVarDefaults) do

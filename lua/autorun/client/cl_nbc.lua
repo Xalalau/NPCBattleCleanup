@@ -41,7 +41,7 @@ local function NBC_Menu(CPanel)
 
     panel = CPanel:AddControl("ComboBox", {
         MenuButton = "1",
-        Folder = "nbc",
+        Folder = NBC.dataDir,
         Options = { ["#preset.default"] = NBC.CVarDefaults },
         CVars = table.GetKeys(NBC.CVarDefaults)
     })
