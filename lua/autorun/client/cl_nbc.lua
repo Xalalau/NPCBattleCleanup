@@ -53,7 +53,7 @@ local function NBC_Menu(CPanel)
 
         -- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
 
-        delayComboBox:SetText((data["NBC_DelayScale"] == "1" or data["nbc_delayscale"] == 1) and "Second(s)" or "Minute(s)")
+        delayComboBox:SetText(data["nbc_delay_scale"] == 1 and "Second(s)" or "Minute(s)")
     end
 
     CPanel:Help("")
@@ -137,11 +137,11 @@ local function NBC_Menu(CPanel)
 
     CPanel:ControlHelp("Remove dropped/stripped weapons from live players.")
 
-    panel = CPanel:AddControl("CheckBox", { Label = "Corpses When \"Keep Corpses\" Is ON", Command = "nbc_g_mod_keep_corpses" } )
-    panel.OnChange = function(self, bVal) NBC_SendToServer("nbc_g_mod_keep_corpses", bVal) end
-    panel:SetValue(NBC.CVar.nbc_g_mod_keep_corpses:GetInt())
+    panel = CPanel:AddControl("CheckBox", { Label = "Corpses When \"Keep Corpses\" Is ON", Command = "nbc_gmod_keep_corpses" } )
+    panel.OnChange = function(self, bVal) NBC_SendToServer("nbc_gmod_keep_corpses", bVal) end
+    panel:SetValue(NBC.CVar.nbc_gmod_keep_corpses:GetInt())
 
-    CPanel:ControlHelp("Remove corpses even when the GMod option \"Keep Corses\" is turned on.")
+    CPanel:ControlHelp("Remove corpses even when the GMod option \"Keep Corpses\" is turned on.")
 
     CPanel:Help("")
     local deadNPCsSection = vgui.Create("DCollapsibleCategory", CPanel)
