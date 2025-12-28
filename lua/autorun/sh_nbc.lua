@@ -1,4 +1,4 @@
-local cvars = {
+NBC_CVARS = {
     NBC_Decals = 1,
     NBC_DisconnectionCleanup = 0,
     NBC_LivePlyDroppedWeapons = 1,
@@ -22,7 +22,7 @@ local cvars = {
     NBC_DelayScale = 1
 }
 
-for k,v in pairs(cvars) do
+for k,v in pairs(NBC_CVARS) do
     if ! ConVarExists(k) then
         CreateConVar(k, v, { FCVAR_ARCHIVE })
     end

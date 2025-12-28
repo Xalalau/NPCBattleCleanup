@@ -39,29 +39,11 @@ local function NBC_Menu(CPanel)
         Description = "keep your map free of battle remains!"
     })
 
-    options = {
-        NBC_Decals = 1,
-        NBC_DisconnectionCleanup = 0,
-        NBC_LivePlyDroppedWeapons = 1,
-        NBC_GModKeepCorpses = 1,
-        NBC_NPCCorpses = 1,
-        NBC_NPCLeftovers = 1,
-        NBC_NPCWeapons = 1,
-        NBC_NPCItems = 1,
-        NBC_NPCDebris = 1,
-        NBC_PlyWeapons = 1,
-        NBC_PlyItems = 1,
-        NBC_PlyPlacedWeapons = 0,
-        NBC_PlyPlacedItems = 0,
-        NBC_FadingTime = "Normal",
-        NBC_Delay = 2,
-        NBC_DelayScale = 1
-    }
     panel = CPanel:AddControl("ComboBox", {
         MenuButton = "1",
         Folder = "nbc",
-        Options = { ["#preset.default"] = options },
-        CVars = table.GetKeys(options)
+        Options = { ["#preset.default"] = NBC_CVARS },
+        CVars = table.GetKeys(NBC_CVARS)
     })
     panel.OnSelect = function(self, index, text, data)
         for k,v in pairs(data) do
