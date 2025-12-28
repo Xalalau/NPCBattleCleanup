@@ -1,4 +1,4 @@
-local isMenuInitialized = false
+local IS_MENU_INITIALIZED = false
 
 -- Update ragdoll fading speed/time
 net.Receive("NBC_UpdateFadingTime", function()
@@ -7,7 +7,7 @@ end)
 
 -- Run commands os the server
 local function NBC_SendToServer(command, value)
-    if not isMenuInitialized then return end
+    if not IS_MENU_INITIALIZED then return end
 
     net.Start("NBC_UpdateCVar")
         net.WriteString(command)
@@ -32,7 +32,7 @@ local function NBC_Menu(CPanel)
     local panel, options, delayComboBox, fadingComboBox
 
     timer.Create("NBC_LoadingMenu", 0.7, 1, function()
-        isMenuInitialized = true
+        IS_MENU_INITIALIZED = true
     end)
 
     CPanel:AddControl("Header", {
