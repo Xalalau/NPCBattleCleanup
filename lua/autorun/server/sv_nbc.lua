@@ -177,8 +177,8 @@ end)
 -- Detect weapons and items from selected weapon bases
 local function IsValidBase(base, ent)
     if ent.Base then
-        for k,v in pairs(base) do
-            if ent.Base == v then
+        for k, name in pairs(base) do
+            if ent.Base == name then
                 return true
             end
         end
@@ -232,24 +232,24 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
     timer.Simple(_STATIC_DELAYS.waitToStartFiltering, function()
         local foundEntities = inRadius == _RADIUS.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 
-        for k,v in pairs(foundEntities) do
+        for k, ent in pairs(foundEntities) do
             local isEntityValid = false
             local isTypeValid = classes ~= _WEAPONS and classes ~= _ITEMS or 
-                                classes == _WEAPONS and v:IsWeapon() or
-                                classes == _ITEMS and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
-                                           not v:IsNPC() and not v:IsRagdoll() and not v:IsNextBot() and
-                                           not v:IsVehicle() and not v:IsWidget()
+                                classes == _WEAPONS and ent:IsWeapon() or
+                                classes == _ITEMS and ent:IsSolid() and not ent:IsWeapon() and not ent:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
+                                           not ent:IsNPC() and not ent:IsRagdoll() and not ent:IsNextBot() and
+                                           not ent:IsVehicle() and not ent:IsWidget()
 
             -- Is it a generic valid detection? corpse/dedris/leftover or weapon/item
-            if v:Health() <= 0 and isTypeValid then
+            if ent:Health() <= 0 and isTypeValid then
                 -- Is the detected entity from a valid class or the base?
                 if not classes then
                     isEntityValid = true
                 else
                     for _, class in pairs(classes) do
-                        if matchClassExactly and v:GetClass() == class or
-                           not matchClassExactly and string.find(v:GetClass(), class) or
-                           base and IsValidBase(base, v) then
+                        if matchClassExactly and ent:GetClass() == class or
+                           not matchClassExactly and string.find(ent:GetClass(), class) or
+                           base and IsValidBase(base, ent) then
 
                             isEntityValid = true
                         end
@@ -260,13 +260,13 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
             -- if it's a valid entity...
             if isEntityValid then
                 -- It's ownerless: get it
-                if not IsValid(v:GetOwner()) or not v:GetOwner():IsValid() or scanEverything and not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() then
-                    table.insert(entList, v)
+                if not IsValid(ent:GetOwner()) or not ent:GetOwner():IsValid() or scanEverything and not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() then
+                    table.insert(entList, ent)
                 -- It's owned by a player: skip it
-                elseif v:GetOwner():IsPlayer() then
+                elseif ent:GetOwner():IsPlayer() then
                 -- It's owned by a NPC: get it if the NPC is dead
-                elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
-                    table.insert(entList, v)
+                elseif ent:GetOwner().GetNPCState and ent:GetOwner():GetNPCState() == 7 then
+                    table.insert(entList, ent)
                 end
             end
         end
@@ -320,23 +320,23 @@ local function RemoveEntities(entList, fixedDelay)
 
             -- Remove the entities with a fading effect
             timer.Create(name, fixedDelay or delay, 1, function()
-                for k,v in pairs(entList) do
-                    if IsRemovable(v) then
-                        local hookName = tostring(v)
+                for k, ent in pairs(entList) do
+                    if IsRemovable(ent) then
+                        local hookName = tostring(ent)
                         local fadingTime = fixedDelay and 0.6 or _STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].delay
                         local maxTime = CurTime() + fadingTime
 
-                        v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work with custom weapon bases
+                        ent:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work with custom weapon bases
 
                         hook.Add("Tick", hookName, function()
-                            if CurTime() >= maxTime or not v:IsValid() then
-                                if IsValid(v) then
-                                    v:Remove()
+                            if CurTime() >= maxTime or not ent:IsValid() then
+                                if IsValid(ent) then
+                                    ent:Remove()
                                 end
 
                                 hook.Remove("Tick", hookName)
                             else
-                                v:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())/fadingTime))
+                                ent:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())/fadingTime))
                             end
                         end)
                     end
@@ -386,7 +386,7 @@ end
 local function RemoveDecals()
     timer.Create("nbc_autoremovedecals", 60, 0, function()
         if NBC.CVar.nbc_decals:GetBool() then
-            for k,ply in ipairs(player.GetHumans()) do
+            for k, ply in ipairs(player.GetHumans()) do
                 if ply and IsValid(ply) and ply:IsValid() then
                     ply:ConCommand("r_cleardecals")
                 end
@@ -462,15 +462,15 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
 
         -- Deal with barnacles
         timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-            for k,v in pairs(entList) do
-                if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
-                    for k2,v2 in pairs(ents.GetAll()) do
-                        if v2:EntIndex() == v:EntIndex() - 1 then
+            for k, ent in pairs(entList) do
+                if IsValid(ent) and ent:GetClass() == "npc_barnacle_tongue_tip" then
+                    for k2, ent2 in pairs(ents.GetAll()) do
+                        if ent2:EntIndex() == ent:EntIndex() - 1 then
                             -- Avoid deleting a NPC that is being eaten by the barnacle
-                            if v2:GetClass() == "npc_barnacle_tongue_tip" then
+                            if ent2:GetClass() == "npc_barnacle_tongue_tip" then
                                 entList[k].doNotRemove = true
                             -- Avoid deleting the tongue of alive barnacles
-                            elseif v2:GetClass() == "npc_barnacle" and v2:Health() > 0 then
+                            elseif ent2:GetClass() == "npc_barnacle" and ent2:Health() > 0 then
                                 entList[k].doNotRemove = true
                             end
                         end
@@ -501,9 +501,9 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
 
         -- Deal with "prop_physics": their creation time must be almost instant
         timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-            for k,v in pairs(entList) do
-                if IsValid(v) and v:GetClass() == "prop_physics" then
-                    if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
+            for k, ent in pairs(entList) do
+                if IsValid(ent) and ent:GetClass() == "prop_physics" then
+                    if not (math.floor(ent:GetCreationTime()) == math.floor(CurTime())) then
                         entList[k] = nil
                     end
                 end
@@ -546,8 +546,8 @@ end)
 -- Hook: NPC damaged
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
     -- HACK: Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
-    for k,v in pairs(_DEATHS_DETECTED_BY_DAMAGE) do
-        if npc:GetClass() == v then
+    for k, ent in pairs(_DEATHS_DETECTED_BY_DAMAGE) do
+        if npc:GetClass() == ent then
             -- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
             timer.Simple(0.001, function()
                 if npc:Health() <= 0 then

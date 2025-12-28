@@ -46,9 +46,9 @@ local function NBC_Menu(CPanel)
         CVars = table.GetKeys(NBC.CVarDefaults)
     })
     panel.OnSelect = function(self, index, text, data)
-        for k,v in pairs(data) do
-            NBC_SendToServer(k, v)
-            RunConsoleCommand(k, v)
+        for command, value in pairs(data) do
+            NBC_SendToServer(command, value)
+            RunConsoleCommand(command, value)
         end
 
         -- The lowercase cvars here are from the CPanel:AddControl("ComboBox", {}) interface
@@ -87,8 +87,8 @@ local function NBC_Menu(CPanel)
         Label = ""
     })
     delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("nbc_delay_scale", data) end
-    for k,v in pairs(delay_options) do
-        delayComboBox:AddChoice(k, v.scale, v.selected or false, v.icon)
+    for label, config in pairs(delay_options) do
+        delayComboBox:AddChoice(label, config.scale, config.selected or false, config.icon)
     end
 
     local fading_options = {
@@ -108,8 +108,8 @@ local function NBC_Menu(CPanel)
         Label = "Fading Speed"
     })
     fadingComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("nbc_fading_time", text) end
-    for k,v in pairs(fading_options) do
-        fadingComboBox:AddChoice(k, "", v.selected or false, v.icon)
+    for label, config in pairs(fading_options) do
+        fadingComboBox:AddChoice(label, "", config.selected or false, config.icon)
     end
 
     CPanel:Help("")
