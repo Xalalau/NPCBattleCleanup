@@ -28,7 +28,7 @@ NBC = {
 
 for name, def_value in pairs(NBC.CVarDefaults) do
     if ! ConVarExists(name) then
-        NBC.CVar[name] = CreateConVar(name, def_value, { FCVAR_ARCHIVE })
+        NBC.CVar[name] = CreateConVar(name, def_value, FCVAR_ARCHIVE)
     end
 end
 
