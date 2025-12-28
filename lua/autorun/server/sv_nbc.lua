@@ -224,7 +224,7 @@ end
 -- No classes = return every entity inside the radius
 -- radius = _RADIUS.map will force the filter to check the hole map
 local function GetFiltered(position, inRadius, classes, matchClassExactly, scanEverything)
-    local list = {}
+    local entList = {}
     local base = classes == _ITEMS and _ITEMS_BASE or 
                  classes == _WEAPONS and _WEAPONS_BASE or
                  classes == _LEFTOVERS and _LEFTOVERS_BASE
@@ -261,18 +261,18 @@ local function GetFiltered(position, inRadius, classes, matchClassExactly, scanE
             if isEntityValid then
                 -- It's ownerless: get it
                 if not IsValid(v:GetOwner()) or not v:GetOwner():IsValid() or scanEverything and not v:GetOwner():IsPlayer() and not v:GetOwner():IsNPC() then
-                    table.insert(list, v)
+                    table.insert(entList, v)
                 -- It's owned by a player: skip it
                 elseif v:GetOwner():IsPlayer() then
                 -- It's owned by a NPC: get it if the NPC is dead
                 elseif v:GetOwner().GetNPCState and v:GetOwner():GetNPCState() == 7 then
-                    table.insert(list, v)
+                    table.insert(entList, v)
                 end
             end
         end
     end)
 
-    return list
+    return entList
 end
 
 -- Check if we can remove an entity
@@ -303,11 +303,11 @@ end
 
 -- Remove the entities from a given list
 -- Note: using a fixedDelay will force the fadingTime to "Normal"
-local function RemoveEntities(list, fixedDelay)
+local function RemoveEntities(entList, fixedDelay)
     -- Wait until we can get informations from the area
     timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
         -- Remove the selected entities with a new cleanup order
-        if #list > 0 then
+        if #entList > 0 then
             local name = tostring(math.random(1, 9000000)) .. "re2"
             local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
 
@@ -320,7 +320,7 @@ local function RemoveEntities(list, fixedDelay)
 
             -- Remove the entities with a fading effect
             timer.Create(name, fixedDelay or delay, 1, function()
-                for k,v in pairs(list) do
+                for k,v in pairs(entList) do
                     if IsRemovable(v) then
                         local hookName = tostring(v)
                         local fadingTime = fixedDelay and 0.6 or _STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].delay
@@ -444,7 +444,7 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
     if NBC.CVar.nbc_npc_leftovers:GetBool() and
        (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
     
-        local list = GetFiltered(pos, _RADIUS, _LEFTOVERS, true)
+        local entList = GetFiltered(pos, _RADIUS, _LEFTOVERS, true)
 
         -- Deal with "prop_ragdoll_attached"
         timer.Simple(_STATIC_DELAYS.waitForGameNewEntities, function()
@@ -462,16 +462,16 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
 
         -- Deal with barnacles
         timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-            for k,v in pairs(list) do
+            for k,v in pairs(entList) do
                 if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
                     for k2,v2 in pairs(ents.GetAll()) do
                         if v2:EntIndex() == v:EntIndex() - 1 then
                             -- Avoid deleting a NPC that is being eaten by the barnacle
                             if v2:GetClass() == "npc_barnacle_tongue_tip" then
-                                list[k].doNotRemove = true
+                                entList[k].doNotRemove = true
                             -- Avoid deleting the tongue of alive barnacles
                             elseif v2:GetClass() == "npc_barnacle" and v2:Health() > 0 then
-                                list[k].doNotRemove = true
+                                entList[k].doNotRemove = true
                             end
                         end
                     end
@@ -491,20 +491,20 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
         -- and remove their pieces. My solution is to avoid the explosion using a constant cleanup time
         local extraDelay = class == "npc_combinegunship" and 2 or false
         
-        RemoveEntities(list, extraDelay)
+        RemoveEntities(entList, extraDelay)
     end
 
     -- Clean up dead NPC's debris
     if NBC.CVar.nbc_npc_debris:GetBool() then
         -- Deal with combibe helicopters: they drop debris long before they die all over the map
-        local list = GetFiltered(pos, _RADIUS, _DEBRIS, false, true)
+        local entList = GetFiltered(pos, _RADIUS, _DEBRIS, false, true)
 
         -- Deal with "prop_physics": their creation time must be almost instant
         timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-            for k,v in pairs(list) do
+            for k,v in pairs(entList) do
                 if IsValid(v) and v:GetClass() == "prop_physics" then
                     if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
-                        list[k] = nil
+                        entList[k] = nil
                     end
                 end
             end
@@ -517,7 +517,7 @@ local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
             end)
         end
 
-        RemoveEntities(list)
+        RemoveEntities(entList)
     end
 
     -- Clean up corpses
@@ -619,11 +619,11 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
         -- Hook: Player spawned a sent
         hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
-            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _ITEMS, false)
+            local entList = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _ITEMS, false)
 
             -- Set the player as the entity creator
             timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-                for _,ent in ipairs(list) do
+                for _,ent in ipairs(entList) do
                     if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
                         ent:SetCreator(ply)
                     end
@@ -632,17 +632,17 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
             -- Clean up player's weapons
             if NBC.CVar.nbc_ply_placed_items:GetBool() then
-                RemoveEntities(list)
+                RemoveEntities(entList)
             end
         end)
 
         -- Hook: Player spawned a swep
         hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
-            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _WEAPONS, false)
+            local entList = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _WEAPONS, false)
 
             -- Set the player as the entity creator
             timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
-                for _,ent in ipairs(list) do
+                for _,ent in ipairs(entList) do
                     if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
                         ent:SetCreator(ply)
                     end
@@ -651,7 +651,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
             -- Clean up player's items
             if NBC.CVar.nbc_ply_placed_weapons:GetBool() then 
-                RemoveEntities(list)
+                RemoveEntities(entList)
             end
         end)
     end
