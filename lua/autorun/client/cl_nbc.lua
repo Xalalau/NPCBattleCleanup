@@ -75,7 +75,7 @@ local function NBC_Menu(CPanel)
     panel.OnValueChanged = function(self, val) NBC_SendToServer_Slider("NBC_Delay", val) end
     panel:SetValue(GetConVar("NBC_Delay"):GetInt())
 
-    options = {
+    local delay_options = {
         ["Second(s)"] = {
             scale = 1,
             selected = true,
@@ -91,11 +91,11 @@ local function NBC_Menu(CPanel)
         Label = ""
     })
     delayComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_DelayScale", data) end
-    for k,v in pairs(options) do
+    for k,v in pairs(delay_options) do
         delayComboBox:AddChoice(k, v.scale, v.selected or false, v.icon)
     end
 
-    options = {
+    local fading_options = {
         ["Fast"] = {
             icon = "icon16/control_end_blue.png"
         },
@@ -112,7 +112,7 @@ local function NBC_Menu(CPanel)
         Label = "Fading Speed"
     })
     fadingComboBox.OnSelect = function(self, index, text, data) NBC_SendToServer("NBC_FadingTime", text) end
-    for k,v in pairs(options) do
+    for k,v in pairs(fading_options) do
         fadingComboBox:AddChoice(k, "", v.selected or false, v.icon)
     end
 
