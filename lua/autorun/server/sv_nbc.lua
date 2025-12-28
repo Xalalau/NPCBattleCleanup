@@ -5,9 +5,9 @@ util.AddNetworkString("NBC_UpdateCVar")
 
 -- Vars
 
-local G_RAG_MAX -- Last registered g_ragdoll_maxcount 
+local _G_RAG_MAX -- Last registered g_ragdoll_maxcount 
 
-local LAST_CLEANUP_DELAY = {
+local _LAST_CLEANUP_DELAY = {
     waiting = false, -- If we're waiting for a cleanup order
     value, -- Current delay
     scale = {
@@ -17,16 +17,16 @@ local LAST_CLEANUP_DELAY = {
     }
 }
 
-local RADIUS = {
+local _RADIUS = {
     small = 32,
     normal = 128,
     large = 256,
     map = -1
 }
 
-local LAST_FADING_DELAY
+local _LAST_FADING_DELAY
 
-local STATIC_DELAYS = {
+local _STATIC_DELAYS = {
     removeThrowables = 2,
     restoreGRagdollMaxcount = 0.4,
     waitBurningCorpse = 7.5, -- GMod fixed value
@@ -48,14 +48,14 @@ local STATIC_DELAYS = {
 }
 
 -- The minimum time that the game needs to create new entities after a NPC dies
-STATIC_DELAYS.waitForGameNewEntities = 0.05
+_STATIC_DELAYS.waitForGameNewEntities = 0.05
 -- Start filtering entities an instant after the game is ready. It makes it possible to do any extra preparations in the meantime
-STATIC_DELAYS.waitToStartFiltering = STATIC_DELAYS.waitForGameNewEntities + 0.01
+_STATIC_DELAYS.waitToStartFiltering = _STATIC_DELAYS.waitForGameNewEntities + 0.01
 -- The minimum time before using the filtered results list. If we access it too fast, we may end up with an incomplete table
-STATIC_DELAYS.waitForFilteredResults = STATIC_DELAYS.waitToStartFiltering + 0.03
+_STATIC_DELAYS.waitForFilteredResults = _STATIC_DELAYS.waitToStartFiltering + 0.03
 
 -- Workaround to detected NPC deaths that aren't reported in the "OnNPCKilled" hook
-local DEATHS_DETECTED_BY_DAMAGE = { -- Search for perfect matches
+local _DEATHS_DETECTED_BY_DAMAGE = { -- Search for perfect matches
     -- Default:
     "npc_combinegunship",
     "npc_helicopter",
@@ -66,7 +66,7 @@ local DEATHS_DETECTED_BY_DAMAGE = { -- Search for perfect matches
 -- Note: the entities won't be removed if they aren't caught by these filters
 -- Note2: I also try to get entities by Base because it's common for several addons to don't follow name patterns
 
-local WEAPONS = { -- Search for substrings
+local _WEAPONS = { -- Search for substrings
     -- Default:
     "weapon_",
     "ai_weapon_",
@@ -82,7 +82,7 @@ local WEAPONS = { -- Search for substrings
     "vj_",       -- VJ Base
     "meleearts"  -- Melee Arts 2
 }
-local WEAPONS_BASE = { -- Search for perfect matches
+local _WEAPONS_BASE = { -- Search for perfect matches
     -- Addons:
     "tfa_gun_base", -- TFA
     "arccw_base", -- ArcCW
@@ -96,20 +96,20 @@ local WEAPONS_BASE = { -- Search for perfect matches
     "cw_grenade_base", -- CW2
     "weapon_vj_base" -- VJ
 }
-local ITEMS = { -- Search for substrings
+local _ITEMS = { -- Search for substrings
     -- Default:
     "item_",
     "npc_grenade_",
     -- Addons:
     "vj_" -- VJ
 }
-local ITEMS_BASE = { -- Search for perfect matches
+local _ITEMS_BASE = { -- Search for perfect matches
     -- Addons:
     "arccw_att_base", -- ArcCW
     "cw_attpack_base", -- CW2
     "cw_ammo_ent_base" -- CW2
 }
-local LEFTOVERS = { -- Search for perfect matches
+local _LEFTOVERS = { -- Search for perfect matches
     -- Default:
     "prop_ragdoll",
     "prop_ragdoll_attached",
@@ -120,7 +120,7 @@ local LEFTOVERS = { -- Search for perfect matches
     "npc_combinegunship",
     "npc_combine_camera"
 }
-local LEFTOVERS_BASE = { -- Search for perfect matches
+local _LEFTOVERS_BASE = { -- Search for perfect matches
     -- Addons:
     "npc_vj_animal_base", -- VJ
     "npc_vj_creature_base", -- VJ
@@ -128,14 +128,14 @@ local LEFTOVERS_BASE = { -- Search for perfect matches
     "npc_vj_tank_base", -- VJ
     "npc_vj_tankg_base" -- VJ
 }
-local DEBRIS = { -- Search for substrings
+local _DEBRIS = { -- Search for substrings
     -- Default:
     "gib",
     "prop_physics",
     "npc_helicoptersensor",
     "helicopter_chunk"
 }
-local THROWABLES = { -- Search for substrings
+local _THROWABLES = { -- Search for substrings
     "meleeartsthrowable" -- Melee Arts 2
 }
 
@@ -152,7 +152,7 @@ local THROWABLES = { -- Search for substrings
 -- Update fading time on new players
 hook.Add("PlayerInitialSpawn", "NBC_Initialize", function(ply)
     net.Start("NBC_UpdateFadingTime")
-        net.WriteString(tostring(STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].gRagdollFadespeed))
+        net.WriteString(tostring(_STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].gRagdollFadespeed))
     net.Send(ply)
 end)
 
@@ -188,53 +188,53 @@ end
 -- Adjust the current running timers to match new configurations
 -- "Cleanup Delay" & "Fading Speed"
 local function UpdateConfigurations()
-    if LAST_FADING_DELAY ~= STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay then
-       LAST_FADING_DELAY = STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay
+    if _LAST_FADING_DELAY ~= _STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].delay then
+       _LAST_FADING_DELAY = _STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].delay
 
         net.Start("NBC_UpdateFadingTime")
-            net.WriteString(tostring(STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].gRagdollFadespeed))
+            net.WriteString(tostring(_STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].gRagdollFadespeed))
         net.Broadcast()
     end
 
-    if LAST_CLEANUP_DELAY.scale[1] ~= NBC.CVar.NBC_DelayScale:GetFloat() or
-       LAST_CLEANUP_DELAY.value ~= NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat() then
+    if _LAST_CLEANUP_DELAY.scale[1] ~= NBC.CVar.nbc_delay_scale:GetFloat() or
+       _LAST_CLEANUP_DELAY.value ~= NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat() then
 
         -- Update the stored states
-        LAST_CLEANUP_DELAY.scale[1] = NBC.CVar.NBC_DelayScale:GetFloat()
-        LAST_CLEANUP_DELAY.value = NBC.CVar.NBC_Delay:GetFloat() * LAST_CLEANUP_DELAY.scale[1]
+        _LAST_CLEANUP_DELAY.scale[1] = NBC.CVar.nbc_delay_scale:GetFloat()
+        _LAST_CLEANUP_DELAY.value = NBC.CVar.nbc_delay:GetFloat() * _LAST_CLEANUP_DELAY.scale[1]
 
         -- Clear the waiting for a cleanup order
-        if LAST_CLEANUP_DELAY.waiting then
-            LAST_CLEANUP_DELAY.waiting = false
+        if _LAST_CLEANUP_DELAY.waiting then
+            _LAST_CLEANUP_DELAY.waiting = false
         end
 
         -- Remove an older cleanup order if it exists
-        if timer.Exists(LAST_CLEANUP_DELAY.scale[2]) then
-            timer.Remove(LAST_CLEANUP_DELAY.scale[2])
+        if timer.Exists(_LAST_CLEANUP_DELAY.scale[2]) then
+            timer.Remove(_LAST_CLEANUP_DELAY.scale[2])
         end
-        if timer.Exists(LAST_CLEANUP_DELAY.scale[3]) then
-            timer.Remove(LAST_CLEANUP_DELAY.scale[3])
+        if timer.Exists(_LAST_CLEANUP_DELAY.scale[3]) then
+            timer.Remove(_LAST_CLEANUP_DELAY.scale[3])
         end
     end
 end
 
 -- Find entities inside a sphere with the given classes
 -- No classes = return every entity inside the radius
--- radius = RADIUS.map will force the filter to check the hole map
+-- radius = _RADIUS.map will force the filter to check the hole map
 local function GetFiltered(position, inRadius, classes, matchClassExactly, scanEverything)
     local list = {}
-    local base = classes == ITEMS and ITEMS_BASE or 
-                 classes == WEAPONS and WEAPONS_BASE or
-                 classes == LEFTOVERS and LEFTOVERS_BASE
+    local base = classes == _ITEMS and _ITEMS_BASE or 
+                 classes == _WEAPONS and _WEAPONS_BASE or
+                 classes == _LEFTOVERS and _LEFTOVERS_BASE
 
-    timer.Simple(STATIC_DELAYS.waitToStartFiltering, function()
-        local foundEntities = inRadius == RADIUS.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
+    timer.Simple(_STATIC_DELAYS.waitToStartFiltering, function()
+        local foundEntities = inRadius == _RADIUS.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
 
         for k,v in pairs(foundEntities) do
             local isEntityValid = false
-            local isTypeValid = classes ~= WEAPONS and classes ~= ITEMS or 
-                                classes == WEAPONS and v:IsWeapon() or
-                                classes == ITEMS and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
+            local isTypeValid = classes ~= _WEAPONS and classes ~= _ITEMS or 
+                                classes == _WEAPONS and v:IsWeapon() or
+                                classes == _ITEMS and v:IsSolid() and not v:IsWeapon() and not v:IsPlayer() and -- Isolate items the best I can to avoid deleting random stuff
                                            not v:IsNPC() and not v:IsRagdoll() and not v:IsNextBot() and
                                            not v:IsVehicle() and not v:IsWidget()
 
@@ -279,8 +279,8 @@ local function IsRemovable(ent)
         if not ent.doNotRemove then -- Not set to not be removed
             if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by the player
                 if ent.isThrowable or -- Thrown entities
-                   ent:IsWeapon() and NBC.CVar.NBC_PlyPlacedWeapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
-                   not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.NBC_PlyPlacedItems:GetBool() -- A sent with NBC_PlyPlacedItems turned on
+                   ent:IsWeapon() and NBC.CVar.nbc_ply_placed_weapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons turned on
+                   not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.nbc_ply_placed_items:GetBool() -- A sent with NBC_PlyPlacedItems turned on
                     then
 
                     return true
@@ -303,25 +303,25 @@ end
 -- Note: using a fixedDelay will force the fadingTime to "Normal"
 local function RemoveEntities(list, fixedDelay)
     -- Wait until we can get informations from the area
-    timer.Simple(STATIC_DELAYS.waitForFilteredResults, function()
+    timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
         -- Remove the selected entities with a new cleanup order
         if #list > 0 then
             local name = tostring(math.random(1, 9000000)) .. "re2"
-            local delay = NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat()
+            local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
 
             -- Adjustments
             UpdateConfigurations()
 
             -- Store the current state
-            LAST_CLEANUP_DELAY.value = delay
-            LAST_CLEANUP_DELAY.scale[3] = name
+            _LAST_CLEANUP_DELAY.value = delay
+            _LAST_CLEANUP_DELAY.scale[3] = name
 
             -- Remove the entities with a fading effect
             timer.Create(name, fixedDelay or delay, 1, function()
                 for k,v in pairs(list) do
                     if IsRemovable(v) then
                         local hookName = tostring(v)
-                        local fadingTime = fixedDelay and 0.6 or STATIC_DELAYS.fading[NBC.CVar.NBC_FadingTime:GetString()].delay
+                        local fadingTime = fixedDelay and 0.6 or _STATIC_DELAYS.fading[NBC.CVar.nbc_fading_time:GetString()].delay
                         local maxTime = CurTime() + fadingTime
 
                         v:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: this doesn't work with custom weapon bases
@@ -350,31 +350,31 @@ local function RemoveCorpses(identifier, noDelay)
     identifier = tostring(identifier)
 
     -- Keep the g_ragdoll_maxcount value safely stored
-    if currentGRagMax ~= 0 and G_RAG_MAX ~= currentGRagMax then
-        G_RAG_MAX = currentGRagMax
+    if currentGRagMax ~= 0 and _G_RAG_MAX ~= currentGRagMax then
+        _G_RAG_MAX = currentGRagMax
     end
 
     -- Adjustments
     UpdateConfigurations()
 
     -- Remove the corpses on the ground with a new cleanup order
-    if not LAST_CLEANUP_DELAY.waiting and currentGRagMax ~= 0 then
+    if not _LAST_CLEANUP_DELAY.waiting and currentGRagMax ~= 0 then
         local name = "AutoRemoveCorpses"..identifier
-        local delay = NBC.CVar.NBC_Delay:GetFloat() * NBC.CVar.NBC_DelayScale:GetFloat()
-        LAST_CLEANUP_DELAY.waiting = true
+        local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
+        _LAST_CLEANUP_DELAY.waiting = true
 
         -- Store the current state
-        LAST_CLEANUP_DELAY.value = delay
-        LAST_CLEANUP_DELAY.scale[2] = name
+        _LAST_CLEANUP_DELAY.value = delay
+        _LAST_CLEANUP_DELAY.scale[2] = name
 
         -- Start
         timer.Create(name, noDelay and 0 or delay, 1, function()
             RunConsoleCommand("g_ragdoll_maxcount", 0)
 
-            timer.Create("AutoRemoveCorpses2"..identifier, STATIC_DELAYS.restoreGRagdollMaxcount, 1, function()
-                RunConsoleCommand("g_ragdoll_maxcount", G_RAG_MAX)
+            timer.Create("AutoRemoveCorpses2"..identifier, _STATIC_DELAYS.restoreGRagdollMaxcount, 1, function()
+                RunConsoleCommand("g_ragdoll_maxcount", _G_RAG_MAX)
 
-                LAST_CLEANUP_DELAY.waiting = false
+                _LAST_CLEANUP_DELAY.waiting = false
             end)
         end)
     end
@@ -383,7 +383,7 @@ end
 -- Remove decals of blood, explosions, gunshots and others
 local function RemoveDecals()
     timer.Create("nbc_autoremovedecals", 60, 0, function()
-        if NBC.CVar.NBC_Decals:GetBool() then
+        if NBC.CVar.nbc_decals:GetBool() then
             for k,ply in ipairs(player.GetHumans()) do
                 if ply and IsValid(ply) and ply:IsValid() then
                     ply:ConCommand("r_cleardecals")
@@ -396,9 +396,9 @@ RemoveDecals()
 
 -- Remove thrown entities
 local function RemoveThrowable(ent)
-    for _, class in pairs(THROWABLES) do
+    for _, class in pairs(_THROWABLES) do
         if ent:GetClass() == class then
-            timer.Simple(STATIC_DELAYS.removeThrowables, function()
+            timer.Simple(_STATIC_DELAYS.removeThrowables, function()
                 ent.isThrowable = true
                 ent:SetCreator(player.GetHumans()[1])
                 RemoveEntities({ ent })
@@ -409,11 +409,11 @@ end
 
 -- Process killed NPCs
 -- Note: after adding .doNotRemove to an entity the addon will not delete it
-local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
+local function NPCDeathEvent(npc, class, pos, _RADIUS, isRechecking)
     -- Attempt to remove contents created very late (by very long death animations/transitions)
     if not isRechecking then
         timer.Simple(3, function()
-            NPCDeathEvent(npc, class, pos, RADIUS, true)
+            NPCDeathEvent(npc, class, pos, _RADIUS, true)
         end)
     end
 
@@ -429,23 +429,23 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up NPC's weapons
-    if NBC.CVar.NBC_NPCWeapons:GetBool() then
-        RemoveEntities(GetFiltered(pos, RADIUS, WEAPONS, false))
+    if NBC.CVar.nbc_npc_weapons:GetBool() then
+        RemoveEntities(GetFiltered(pos, _RADIUS, _WEAPONS, false))
     end
 
     -- Clean up NPC's items
-    if NBC.CVar.NBC_NPCItems:GetBool() then
-        RemoveEntities(GetFiltered(pos, RADIUS, ITEMS, false))
+    if NBC.CVar.nbc_npc_items:GetBool() then
+        RemoveEntities(GetFiltered(pos, _RADIUS, _ITEMS, false))
     end
 
     -- Clean up dead NPC's leftovers
-    if NBC.CVar.NBC_NPCLeftovers:GetBool() and
-       (NBC.CVar.NBC_GModKeepCorpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
+    if NBC.CVar.nbc_npc_leftovers:GetBool() and
+       (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
     
-        local list = GetFiltered(pos, RADIUS, LEFTOVERS, true)
+        local list = GetFiltered(pos, _RADIUS, _LEFTOVERS, true)
 
         -- Deal with "prop_ragdoll_attached"
-        timer.Simple(STATIC_DELAYS.waitForGameNewEntities, function()
+        timer.Simple(_STATIC_DELAYS.waitForGameNewEntities, function()
             for _,ent in ipairs(ents.GetAll()) do
                 if ent and IsValid(ent) and ent:IsValid() and ent:GetClass() == "prop_ragdoll_attached" then
                     ent:SetOwner()
@@ -459,7 +459,7 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
         end
 
         -- Deal with barnacles
-        timer.Simple(STATIC_DELAYS.waitForFilteredResults, function()
+        timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
             for k,v in pairs(list) do
                 if IsValid(v) and v:GetClass() == "npc_barnacle_tongue_tip" then
                     for k2,v2 in pairs(ents.GetAll()) do
@@ -493,12 +493,12 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up dead NPC's debris
-    if NBC.CVar.NBC_NPCDebris:GetBool() then
+    if NBC.CVar.nbc_npc_debris:GetBool() then
         -- Deal with combibe helicopters: they drop debris long before they die all over the map
-        local list = GetFiltered(pos, RADIUS, DEBRIS, false, true)
+        local list = GetFiltered(pos, _RADIUS, _DEBRIS, false, true)
 
         -- Deal with "prop_physics": their creation time must be almost instant
-        timer.Simple(STATIC_DELAYS.waitForFilteredResults, function()
+        timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
             for k,v in pairs(list) do
                 if IsValid(v) and v:GetClass() == "prop_physics" then
                     if not (math.floor(v:GetCreationTime()) == math.floor(CurTime())) then
@@ -511,7 +511,7 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
         -- Deal with combibe helicopters: they drop debris long before they die all over the map
         if class == "npc_helicopter" then
             timer.Simple(6.5, function()
-                RemoveEntities(GetFiltered(Vector(0,0,0), RADIUS, { "gib" }, false, true))
+                RemoveEntities(GetFiltered(Vector(0,0,0), _RADIUS, { "gib" }, false, true))
             end)
         end
 
@@ -519,14 +519,14 @@ local function NPCDeathEvent(npc, class, pos, RADIUS, isRechecking)
     end
 
     -- Clean up corpses
-    if npc:IsValid() and NBC.CVar.NBC_NPCCorpses:GetBool() and
-       (NBC.CVar.NBC_GModKeepCorpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
+    if npc:IsValid() and NBC.CVar.nbc_npc_corpses:GetBool() and
+       (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
         -- Deal with burning corpses:
         -- Since I wasn't able to extinguish the fire because the game functions
         -- were buggy and very closed, I just wait until the corpses finish burning
         -- so they restore their normal state and become removable.
         if npc:IsOnFire() then
-            timer.Simple(STATIC_DELAYS.waitBurningCorpse, function()
+            timer.Simple(_STATIC_DELAYS.waitBurningCorpse, function()
                 RemoveCorpses("onk_corpses", true) -- "onk_corpses" is passed because the npc entity is nil at this point
             end)
         -- Normal
@@ -538,18 +538,18 @@ end
 
 -- Hook: NPC killed
 hook.Add("OnNPCKilled", "NBC_OnNPCKilled", function(npc, attacker, inflictor)
-    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), RADIUS.normal) 
+    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), _RADIUS.normal) 
 end)
 
 -- Hook: NPC damaged
 hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
     -- HACK: Workaround to detected NPCs deaths that aren't reported in the "OnNPCKilled" hook
-    for k,v in pairs(DEATHS_DETECTED_BY_DAMAGE) do
+    for k,v in pairs(_DEATHS_DETECTED_BY_DAMAGE) do
         if npc:GetClass() == v then
             -- Note: I wasn't able to correctly subtract the damage from the health, so I get it from some next frame
             timer.Simple(0.001, function()
                 if npc:Health() <= 0 then
-                    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and RADIUS.map or RADIUS.normal)
+                    NPCDeathEvent(npc, npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and _RADIUS.map or _RADIUS.normal)
                 end
             end)
         end
@@ -559,20 +559,20 @@ end)
 -- Hook: Player killed
 hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
     -- Clean up player's items
-    if NBC.CVar.NBC_PlyItems:GetBool() then
-        RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, ITEMS, false))
+    if NBC.CVar.nbc_ply_items:GetBool() then
+        RemoveEntities(GetFiltered(ply:GetPos(), _RADIUS.normal, _ITEMS, false))
     end
 
     -- Clean up player's weapons
-    if NBC.CVar.NBC_PlyWeapons:GetBool() then 
-        RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, WEAPONS, false))
+    if NBC.CVar.nbc_ply_weapons:GetBool() then 
+        RemoveEntities(GetFiltered(ply:GetPos(), _RADIUS.normal, _WEAPONS, false))
     end
 end)
 
 -- Hook: Player Disconnected
 hook.Add("PlayerDisconnected", "NBC_PlayerDisconnected", function(ply)
     -- Kill all live NPCs from disconnected players
-    if NBC.CVar.NBC_DisconnectionCleanup:GetBool() then
+    if NBC.CVar.nbc_disconnection_cleanup:GetBool() then
         for _,ent in ipairs(ents.GetAll()) do
             if ent and IsValid(ent) and ent:IsValid() and ent:GetOwner() and ent:IsNPC() then
                 --* Override hook - NBC_PlayerDisconnectedBypass
@@ -593,7 +593,7 @@ hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
 
         -- Barnacles create prop_ragdoll_attached
         if ent:GetClass() == "prop_ragdoll_attached" then
-            NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), RADIUS.map)
+            NPCDeathEvent(ent, ent:GetClass(), ent:GetPos(), _RADIUS.map)
         end
     end
 end)
@@ -601,8 +601,8 @@ end)
 -- Hook: Player dropped weapon using Lua
 hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
     -- Clean up weapons dropped by live players
-    if NBC.CVar.NBC_LivePlyDroppedWeapons:GetBool() and ply:IsValid() then 
-        RemoveEntities(GetFiltered(ply:GetPos(), RADIUS.normal, WEAPONS, false))
+    if NBC.CVar.nbc_live_ply_dropped_weapons:GetBool() and ply:IsValid() then 
+        RemoveEntities(GetFiltered(ply:GetPos(), _RADIUS.normal, _WEAPONS, false))
     end
 end)
 
@@ -617,10 +617,10 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
 
         -- Hook: Player spawned a sent
         hook.Add("PlayerSpawnSENT", "NBC_PlayerSpawnSENT", function(ply, sent)
-            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), RADIUS.small, ITEMS, false)
+            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _ITEMS, false)
 
             -- Set the player as the entity creator
-            timer.Simple(STATIC_DELAYS.waitForFilteredResults, function()
+            timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
                 for _,ent in ipairs(list) do
                     if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
                         ent:SetCreator(ply)
@@ -629,17 +629,17 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
             end)
 
             -- Clean up player's weapons
-            if NBC.CVar.NBC_PlyPlacedItems:GetBool() then
+            if NBC.CVar.nbc_ply_placed_items:GetBool() then
                 RemoveEntities(list)
             end
         end)
 
         -- Hook: Player spawned a swep
         hook.Add("PlayerSpawnSWEP", "NBC_PlayerSpawnSWEP", function(ply, swep)
-            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), RADIUS.small, WEAPONS, false)
+            local list = GetFiltered(Vector(ply:GetEyeTrace().HitPos), _RADIUS.small, _WEAPONS, false)
 
             -- Set the player as the entity creator
-            timer.Simple(STATIC_DELAYS.waitForFilteredResults, function()
+            timer.Simple(_STATIC_DELAYS.waitForFilteredResults, function()
                 for _,ent in ipairs(list) do
                     if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
                         ent:SetCreator(ply)
@@ -648,7 +648,7 @@ hook.Add("InitPostEntity", "BS_Initialize", function()
             end)
 
             -- Clean up player's items
-            if NBC.CVar.NBC_PlyPlacedWeapons:GetBool() then 
+            if NBC.CVar.nbc_ply_placed_weapons:GetBool() then 
                 RemoveEntities(list)
             end
         end)

@@ -1,37 +1,37 @@
 NBC = {
     CVarDefaults = {
-        NBC_Decals = 1,
-        NBC_DisconnectionCleanup = 0,
-        NBC_LivePlyDroppedWeapons = 1,
-        NBC_GModKeepCorpses = 1,
+        nbc_decals = 1,
+        nbc_disconnection_cleanup = 0,
+        nbc_live_ply_dropped_weapons = 1,
+        nbc_gmod_keep_corpses = 1,
 
-        NBC_NPCCorpses = 1,
-        NBC_NPCLeftovers = 1,
-        NBC_NPCWeapons = 1,
-        NBC_NPCItems = 1,
-        NBC_NPCDebris = 1,
+        nbc_npc_corpses = 1,
+        nbc_npc_leftovers = 1,
+        nbc_npc_weapons = 1,
+        nbc_npc_items = 1,
+        nbc_npc_debris = 1,
 
-        NBC_PlyWeapons = 1,
-        NBC_PlyItems = 1,
+        nbc_ply_weapons = 1,
+        nbc_ply_items = 1,
 
-        NBC_PlyPlacedWeapons = 0,
-        NBC_PlyPlacedItems = 0,
+        nbc_ply_placed_weapons = 0,
+        nbc_ply_placed_items = 0,
 
-        NBC_FadingTime = "Normal",
+        nbc_fading_time = "Normal",
 
-        NBC_Delay = 2,
-        NBC_DelayScale = 1
+        nbc_delay = 2,
+        nbc_delay_scale = 1
     },
-    CVAR = {}
+    CVar = {}
 }
 
-for name, def_value in pairs(NBC_CVARS) do
+for name, def_value in pairs(NBC.CVarDefaults) do
     if ! ConVarExists(name) then
         NBC.CVar[name] = CreateConVar(name, def_value, { FCVAR_ARCHIVE })
     end
 end
 
-hook.Add( "Initialize", "NBC_sh_init", function()
+hook.Add("Initialize", "NBC_sh_init", function()
 	NBC.CVar.ai_serverragdolls = GetConVar("ai_serverragdolls")
 	NBC.CVar.g_ragdoll_maxcount = GetConVar("g_ragdoll_maxcount")
 end)
