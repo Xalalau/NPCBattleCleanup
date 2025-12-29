@@ -12,8 +12,8 @@ function NBC.RemoveEntities(entList, fixedDelay)
             NBC.Util.UpdateConfigurations()
 
             -- Store current state
-            NBC.lastCleanupDelay.value = delay
-            NBC.lastCleanupDelay.scale[3] = timerName
+            NBC.lastCleanup.value = delay
+            NBC.lastCleanup.corpsesCleanupTimer = timerName
 
             -- Remove entities with a fade effect
             timer.Create(timerName, fixedDelay or delay, 1, function()
@@ -57,14 +57,14 @@ function NBC.RemoveCorpses(identifier, noDelay)
     NBC.Util.UpdateConfigurations()
 
     -- Schedule corpse removal with a new cleanup timer
-    if not NBC.lastCleanupDelay.waiting and currentGRagMax ~= 0 then
+    if not NBC.lastCleanup.waiting and currentGRagMax ~= 0 then
         local name = "AutoRemoveCorpses"..identifier
         local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
-        NBC.lastCleanupDelay.waiting = true
+        NBC.lastCleanup.waiting = true
 
         -- Store current state
-        NBC.lastCleanupDelay.value = delay
-        NBC.lastCleanupDelay.scale[2] = name
+        NBC.lastCleanup.value = delay
+        NBC.lastCleanup.entCleanupTimer = name
 
         -- Start timer
         timer.Create(name, noDelay and 0 or delay, 1, function()
@@ -73,7 +73,7 @@ function NBC.RemoveCorpses(identifier, noDelay)
             timer.Create("AutoRemoveCorpses2"..identifier, NBC.staticDelays.restoreGRagdollMaxcount, 1, function()
                 RunConsoleCommand("g_ragdoll_maxcount", NBC.gRagMax)
 
-                NBC.lastCleanupDelay.waiting = false
+                NBC.lastCleanup.waiting = false
             end)
         end)
     end

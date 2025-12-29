@@ -46,14 +46,12 @@ if SERVER then
 
     NBC.gRagMax = nil -- Last recorded g_ragdoll_maxcount 
 
-    NBC.lastCleanupDelay = {
+    NBC.lastCleanup = {
         waiting = false, -- Whether a cleanup is scheduled
         value, -- Current delay value
-        scale = {
-            1, -- Current scale multiplier
-            "", -- Name of the corpses cleanup timer
-            "" -- Name of the entities cleanup timer
-        }
+        scale = 1, -- Current scale multiplier
+        entCleanupTimer = "none", -- Name of the corpses cleanup timer
+        corpsesCleanupTimer = "none" -- Name of the entities cleanup timer
     }
 
     NBC.radius = {

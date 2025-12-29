@@ -9,24 +9,24 @@ function NBC.Util.UpdateConfigurations()
         net.Broadcast()
     end
 
-    if NBC.lastCleanupDelay.scale[1] ~= NBC.CVar.nbc_delay_scale:GetFloat() or
-       NBC.lastCleanupDelay.value ~= NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat() then
+    if NBC.lastCleanup.scale ~= NBC.CVar.nbc_delay_scale:GetFloat() or
+       NBC.lastCleanup.value ~= NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat() then
 
         -- Update stored state
-        NBC.lastCleanupDelay.scale[1] = NBC.CVar.nbc_delay_scale:GetFloat()
-        NBC.lastCleanupDelay.value = NBC.CVar.nbc_delay:GetFloat() * NBC.lastCleanupDelay.scale[1]
+        NBC.lastCleanup.scale = NBC.CVar.nbc_delay_scale:GetFloat()
+        NBC.lastCleanup.value = NBC.CVar.nbc_delay:GetFloat() * NBC.lastCleanup.scale
 
         -- Clear the waiting-for-cleanup flag
-        if NBC.lastCleanupDelay.waiting then
-            NBC.lastCleanupDelay.waiting = false
+        if NBC.lastCleanup.waiting then
+            NBC.lastCleanup.waiting = false
         end
 
         -- Remove any existing cleanup timers
-        if timer.Exists(NBC.lastCleanupDelay.scale[2]) then
-            timer.Remove(NBC.lastCleanupDelay.scale[2])
+        if timer.Exists(NBC.lastCleanup.entCleanupTimer) then
+            timer.Remove(NBC.lastCleanup.entCleanupTimer)
         end
-        if timer.Exists(NBC.lastCleanupDelay.scale[3]) then
-            timer.Remove(NBC.lastCleanupDelay.scale[3])
+        if timer.Exists(NBC.lastCleanup.corpsesCleanupTimer) then
+            timer.Remove(NBC.lastCleanup.corpsesCleanupTimer)
         end
     end
 end
