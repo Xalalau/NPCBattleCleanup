@@ -3,3 +3,9 @@
 -- it can happen (very rare): remove a gib that is being eaten by an alive barnacle = game crashes
 - Rebels killed by striders are turned into ragdolls and don't get deleted
 - Some combine helicoper pieces are created burning and don't get removed
+
+
+- Field of view clueanup
+- Number of items to keep on the map
+- Make it easier to choose ent classes and bases in menus
+- Automatic detection of bases
