@@ -30,8 +30,10 @@ NBC = {
 }
 
 for name, def_value in pairs(NBC.CVarDefaults) do
-    if CLIENT or SERVER and not ConVarExists(name) then
-        NBC.CVar[name] = CreateConVar(name, def_value, FCVAR_ARCHIVE)
+    if not ConVarExists(name) then
+        NBC.CVar[name] = CreateConVar(name, tostring(def_value), FCVAR_ARCHIVE)
+    else
+        NBC.CVar[name] = GetConVar(name)
     end
 end
 
@@ -48,7 +50,7 @@ if SERVER then
 
     NBC.lastCleanup = {
         waiting = false, -- Whether a cleanup is scheduled
-        value, -- Current delay value
+        value = nil, -- Current delay value
         scale = 1, -- Current scale multiplier
         entCleanupTimer = "none", -- Name of the corpses cleanup timer
         corpsesCleanupTimer = "none" -- Name of the entities cleanup timer

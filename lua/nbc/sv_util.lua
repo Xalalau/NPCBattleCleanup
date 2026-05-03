@@ -1,11 +1,19 @@
+function NBC.Util.GetFadingConfig()
+    local fadingTime = NBC.CVar.nbc_fading_time and NBC.CVar.nbc_fading_time:GetString() or NBC.CVarDefaults.nbc_fading_time
+
+    return NBC.staticDelays.fading[fadingTime] or NBC.staticDelays.fading[NBC.CVarDefaults.nbc_fading_time]
+end
+
 -- Adjust currently running timers to match the new configurations
 -- "Cleanup Delay" & "Fading Speed"
 function NBC.Util.UpdateConfigurations()
-    if NBC.lastFadingDelay ~= NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].delay then
-       NBC.lastFadingDelay = NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].delay
+    local fadingConfig = NBC.Util.GetFadingConfig()
+
+    if NBC.lastFadingDelay ~= fadingConfig.delay then
+        NBC.lastFadingDelay = fadingConfig.delay
 
         net.Start("NBC_UpdateFadingTime")
-            net.WriteString(tostring(NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].gRagdollFadespeed))
+            net.WriteString(tostring(fadingConfig.gRagdollFadespeed))
         net.Broadcast()
     end
 
@@ -45,7 +53,7 @@ function NBC.Util.IsValidBase(base, ent)
 end
 
 -- Find entities within a sphere that match the given classes
--- If classes is nil, return every entity inside the radius
+-- If classes is nil, skip class matching but still apply the usual cleanup filters
 -- radius = NBC.radius.map forces scanning the whole map
 function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly, scanEverything)
     local entList = {}
@@ -72,7 +80,7 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
                 else
                     for _, class in pairs(classes) do
                         if matchClassExactly and ent:GetClass() == class or
-                           not matchClassExactly and string.find(ent:GetClass(), class) or
+                           not matchClassExactly and string.find(ent:GetClass(), class, 1, true) or
                            base and NBC.Util.IsValidBase(base, ent) then
 
                             isEntityValid = true
@@ -99,10 +107,12 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
     return entList
 end
 
-function NBC.Util.SetRemovable(ent, value)
+function NBC.Util.SetDoNotRemove(ent, value)
     if not IsValid(ent) then return false end
 
     ent.doNotRemove = value
+
+    return true
 end
 
 -- Return whether an entity may be removed
@@ -113,15 +123,15 @@ function NBC.Util.IsRemovable(ent)
                 if ent.isThrowable or -- Thrown entities
                    ent:IsWeapon() and NBC.CVar.nbc_ply_placed_weapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons enabled
                    not ent:IsWeapon() and not ent:IsRagdoll() and NBC.CVar.nbc_ply_placed_items:GetBool() -- A sent (entity) with NBC_PlyPlacedItems enabled
-                    then
+                then
 
                     return true
-               end
+                end
             elseif not IsValid(ent:GetOwner()) or -- Nil owner
                    not ent:GetOwner():IsValid() or -- Uninitialized owner
                    not ent:GetOwner():IsPlayer() and not ent:GetOwner():IsNPC() or -- Not owned by a player or NPC
                    ent:GetOwner():Health() <= 0 -- The owner is dead
-                    then
+                then
 
                     return true
             end

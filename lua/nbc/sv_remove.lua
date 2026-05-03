@@ -20,13 +20,13 @@ function NBC.RemoveEntities(entList, fixedDelay)
                 for k, ent in pairs(entList) do
                     if NBC.Util.IsRemovable(ent) then
                         local hookName = tostring(ent)
-                        local fadingTime = fixedDelay and 0.6 or NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].delay
+                        local fadingTime = fixedDelay and 0.6 or NBC.Util.GetFadingConfig().delay
                         local maxTime = CurTime() + fadingTime
 
                         ent:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: does not work with custom weapon bases
 
                         hook.Add("Tick", hookName, function()
-                            if CurTime() >= maxTime or not ent:IsValid() then
+                            if CurTime() >= maxTime or not IsValid(ent) then
                                 if IsValid(ent) then
                                     ent:Remove()
                                 end
@@ -84,7 +84,7 @@ function NBC.RemoveDecals()
     timer.Create("nbc_autoremovedecals", 60, 0, function()
         if NBC.CVar.nbc_decals:GetBool() then
             for k, ply in ipairs(player.GetHumans()) do
-                if ply and IsValid(ply) and ply:IsValid() then
+                if IsValid(ply) then
                     ply:ConCommand("r_cleardecals")
                 end
             end
@@ -94,13 +94,19 @@ end
 
 -- Remove thrown entities
 function NBC.RemoveThrowable(ent)
+    if not IsValid(ent) then return end
+
     for _, class in pairs(NBC.Throwables) do
-        if ent:GetClass() == class then
+        if string.find(ent:GetClass(), class, 1, true) then
             timer.Simple(NBC.staticDelays.removeThrowables, function()
+                if not IsValid(ent) then return end
+
                 ent.isThrowable = true
                 ent:SetCreator(player.GetHumans()[1])
                 NBC.RemoveEntities({ ent })
             end)
+
+            return
         end
     end
 end
@@ -115,7 +121,7 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
         end)
     end
 
-    if npc:IsValid() then
+    if IsValid(npc) then
         -- Clear Creator field; it's used to distinguish player-owned entities from cleanup targets
         npc:SetCreator(nil)
 
@@ -145,14 +151,14 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
         -- Handle "prop_ragdoll_attached"
         timer.Simple(NBC.staticDelays.waitForGameNewEntities, function()
             for _,ent in ipairs(ents.GetAll()) do
-                if ent and IsValid(ent) and ent:IsValid() and ent:GetClass() == "prop_ragdoll_attached" then
+                if IsValid(ent) and ent:GetClass() == "prop_ragdoll_attached" then
                     ent:SetOwner()
                 end
             end
         end)
 
         -- Handle turned turrets
-        if npc:IsValid() and class == "npc_turret_floor" then
+        if IsValid(npc) and class == "npc_turret_floor" then
             npc:SetHealth(0)
         end
 
@@ -164,10 +170,10 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
                         if ent2:EntIndex() == ent:EntIndex() - 1 then
                             -- Avoid deleting an NPC currently being eaten by a barnacle
                             if ent2:GetClass() == "npc_barnacle_tongue_tip" then
-                                NBC.Util.SetRemovable(entList[k], true)
+                                NBC.Util.SetDoNotRemove(entList[k], true)
                             -- Avoid deleting the tongue of a living barnacle
                             elseif ent2:GetClass() == "npc_barnacle" and ent2:Health() > 0 then
-                                NBC.Util.SetRemovable(entList[k], true)
+                                NBC.Util.SetDoNotRemove(entList[k], true)
                             end
                         end
                     end
@@ -177,7 +183,7 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
 
         -- If killed by a barnacle, allow the NPC to be eaten (otherwise we can have a crash)
         if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
-            NBC.Util.SetRemovable(npc, true)
+            NBC.Util.SetDoNotRemove(npc, true)
 
             return
         end
@@ -215,7 +221,7 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
     end
 
     -- Clean up corpses
-    if npc:IsValid() and NBC.CVar.nbc_npc_corpses:GetBool() and
+    if IsValid(npc) and NBC.CVar.nbc_npc_corpses:GetBool() and
        (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
         -- Burning corpses:
         -- Wait until the fire ends so they restore their normal state and become removable.

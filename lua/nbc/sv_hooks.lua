@@ -2,7 +2,7 @@ function NBC.SetHooks()
     -- Send fade time setting to newly connected players
     hook.Add("PlayerInitialSpawn", "NBC_Initialize", function(ply)
         net.Start("NBC_UpdateFadingTime")
-            net.WriteString(tostring(NBC.staticDelays.fading[NBC.CVar.nbc_fading_time:GetString()].gRagdollFadespeed))
+            net.WriteString(tostring(NBC.Util.GetFadingConfig().gRagdollFadespeed))
         net.Send(ply)
     end)
 
@@ -18,7 +18,7 @@ function NBC.SetHooks()
             if npc:GetClass() == ent then
                 -- Note: Couldn't reliably subtract damage from health, so we check in the next frame
                 timer.Simple(0.001, function()
-                    if npc:Health() <= 0 then
+                    if IsValid(npc) and npc:Health() <= 0 then
                         NBC.OnNPCDeathEvent(npc, dmginfo:GetAttacker(), npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and NBC.radius.map or NBC.radius.normal)
                     end
                 end)
@@ -44,7 +44,7 @@ function NBC.SetHooks()
         -- Remove NPCs owned by disconnected players
         if NBC.CVar.nbc_disconnection_cleanup:GetBool() then
             for _,ent in ipairs(ents.GetAll()) do
-                if ent and IsValid(ent) and ent:IsValid() and ent:GetOwner() and ent:IsNPC() then
+                if IsValid(ent) and ent:GetOwner() and ent:IsNPC() then
                     -- Optional override hook: NBC_PlayerDisconnectedBypass
                     -- The ability to prevent removal of specific NPCs if some addons require it
                     if not ent:GetOwner():IsValid() and not hook.Run('NBC_PlayerDisconnectedBypass', ent) then
@@ -58,7 +58,7 @@ function NBC.SetHooks()
     -- Hook: Entity Created
     --   Note: many entities from dead NPCs/players don't appear here
     hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
-        if ent:IsValid() then
+        if IsValid(ent) then
             NBC.RemoveThrowable(ent)
 
             -- Barnacles create prop_ragdoll_attached
@@ -71,7 +71,7 @@ function NBC.SetHooks()
     -- Hook: Player dropped weapon using Lua
     hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
         -- Remove dropped weapons from live players
-        if NBC.CVar.nbc_live_ply_dropped_weapons:GetBool() and ply:IsValid() then 
+        if NBC.CVar.nbc_live_ply_dropped_weapons:GetBool() and IsValid(ply) then
             NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.weapons, false))
         end
     end)
@@ -89,7 +89,7 @@ function NBC.SetHooks()
         -- Mark the player as the creator of recently spawned entities
         timer.Simple(NBC.staticDelays.waitForFilteredResults, function()
             for _,ent in ipairs(entList) do
-                if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
+                if IsValid(ent) and CurTime() - ent:GetCreationTime() <= 0.2 then
                     ent:SetCreator(ply)
                 end
             end
@@ -108,7 +108,7 @@ function NBC.SetHooks()
         -- Mark the player as the creator of recently spawned entities
         timer.Simple(NBC.staticDelays.waitForFilteredResults, function()
             for _,ent in ipairs(entList) do
-                if IsValid(ent) and ent:IsValid() and ent:GetCreationTime() - CurTime() <= 0.2 then
+                if IsValid(ent) and CurTime() - ent:GetCreationTime() <= 0.2 then
                     ent:SetCreator(ply)
                 end
             end
