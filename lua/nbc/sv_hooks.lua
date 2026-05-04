@@ -19,7 +19,8 @@ function NBC.SetHooks()
                 -- Note: Couldn't reliably subtract damage from health, so we check in the next frame
                 timer.Simple(0.001, function()
                     if IsValid(npc) and npc:Health() <= 0 then
-                        NBC.OnNPCDeathEvent(npc, dmginfo:GetAttacker(), npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and NBC.radius.map or NBC.radius.normal)
+                        local attacker = dmginfo:GetAttacker()
+                        NBC.OnNPCDeathEvent(npc, IsValid(attacker) and attacker, npc:GetClass(), npc:GetPos(), npc:GetClass() == "npc_helicopter" and NBC.radius.map or NBC.radius.normal)
                     end
                 end)
             end
