@@ -197,6 +197,12 @@ local function NBC_Menu(CPanel)
 
     CPanel:ControlHelp("Scripted entities (SENTs).")
 
+    panel = CPanel:AddControl("CheckBox", { Label = "Corpses", Command = "nbc_ply_corpses" } )
+    panel.OnChange = function(self, bVal) NBC.Net.SendToServer("nbc_ply_corpses", bVal) end
+    panel:SetValue(NBC.CVar.nbc_ply_corpses:GetInt())
+
+    CPanel:ControlHelp("Player death ragdolls. Enable this to remove them after the cleanup delay.")
+
     CPanel:Help("")
     local entsPlayers = vgui.Create("DCollapsibleCategory", CPanel)
     entsPlayers:SetLabel("Player-placed Entities")

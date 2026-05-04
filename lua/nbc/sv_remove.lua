@@ -240,8 +240,38 @@ function NBC.RemoveEntities(entList, fixedDelay, keepType)
     end)
 end
 
--- Remove an NPC corpse created by CreateEntityRagdoll
+local function tryHandlePlayerCorpse(ply, corpse)
+    if not IsValid(ply) then return true end
+
+    corpse = corpse or ply:GetRagdollEntity()
+
+    if not NBC.Util.IsPlayerCorpse(corpse) then return false end
+
+    if NBC.CVar.nbc_ply_corpses:GetBool() then
+        NBC.RemoveEntities({ corpse }, nil, "corpses")
+    end
+
+    return true
+end
+
+function NBC.schedulePlayerCorpseCleanup(ply)
+    if not IsValid(ply) then return end
+    if tryHandlePlayerCorpse(ply) then return end
+
+    local timerName = "NBC_PlayerCorpseCleanup_" .. tostring(ply:UserID())
+
+    timer.Remove(timerName)
+    timer.Create(timerName, 0.05, 10, function()
+        if tryHandlePlayerCorpse(ply) then
+            timer.Remove(timerName)
+        end
+    end)
+end
+
+-- Remove NPC and player death corpses.
 function NBC.RemoveCorpse(owner, corpse)
+    if tryHandlePlayerCorpse(owner, corpse) then return end
+
     if not IsValid(owner) or not owner:IsNPC() then return end
     if not IsValid(corpse) or not corpse:IsRagdoll() then return end
     if not NBC.CVar.nbc_npc_corpses:GetBool() then return end

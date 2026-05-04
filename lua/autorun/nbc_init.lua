@@ -22,6 +22,7 @@ NBC = {
 
         nbc_ply_weapons = 1,
         nbc_ply_items = 1,
+        nbc_ply_corpses = 0,
 
         nbc_ply_placed_weapons = 0,
         nbc_ply_placed_items = 0,

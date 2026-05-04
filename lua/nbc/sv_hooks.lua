@@ -11,7 +11,7 @@ function NBC.SetHooks()
         NBC.OnNPCDeathEvent(npc, attacker, npc:GetClass(), npc:GetPos(), NBC.radius.normal) 
     end)
 
-    -- Hook: server-side NPC ragdoll created
+    -- Hook: server-side ragdoll created
     hook.Add("CreateEntityRagdoll", "NBC_CreateEntityRagdoll", function(owner, ragdoll)
         NBC.RemoveCorpse(owner, ragdoll)
     end)
@@ -34,6 +34,8 @@ function NBC.SetHooks()
 
     -- Hook: Player killed
     hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
+        NBC.schedulePlayerCorpseCleanup(ply)
+
         -- Remove the player's items
         if NBC.CVar.nbc_ply_items:GetBool() then
             NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.items, false), nil, "items")

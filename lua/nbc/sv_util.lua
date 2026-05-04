@@ -200,6 +200,20 @@ function NBC.Util.IsVisibleInAnyPlayerFOV(ent)
     return false
 end
 
+function NBC.Util.IsPlayerCorpse(ent)
+    if not IsValid(ent) then return false end
+
+    return ent:GetClass() == "hl2mp_ragdoll"
+end
+
+function NBC.Util.ShouldKeepPlayerCorpse(ent)
+    return not NBC.CVar.nbc_ply_corpses:GetBool() and NBC.Util.IsPlayerCorpse(ent)
+end
+
+function NBC.Util.ShouldRemovePlayerCorpse(ent)
+    return NBC.CVar.nbc_ply_corpses:GetBool() and NBC.Util.IsPlayerCorpse(ent)
+end
+
 -- Find entities within a sphere that match the given classes
 -- If classes is nil, skip class matching but still apply the usual cleanup filters
 -- radius = NBC.radius.map forces scanning the whole map
@@ -218,6 +232,7 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
 
         for k, ent in pairs(foundEntities) do
             local isEntityValid = false
+            local shouldKeepPlayerCorpse = NBC.Util.ShouldKeepPlayerCorpse(ent)
             local isTypeValid = classes ~= NBC.weapons and classes ~= NBC.items or 
                                 classes == NBC.weapons and ent:IsWeapon() or
                                 classes == NBC.items and ent:IsSolid() and not ent:IsWeapon() and not ent:IsPlayer() and -- Attempt to isolate items to avoid deleting unrelated entities
@@ -225,7 +240,11 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
                                            not ent:IsVehicle() and not ent:IsWidget()
 
             -- Check if entity is a valid corpse/debris/leftover or weapon/item
-            if (usesDebrisRules or ent:Health() <= 0) and isTypeValid and not NBC.Util.IsBarnacleHeldEntity(ent, barnacles) then
+            if not shouldKeepPlayerCorpse and
+               (usesDebrisRules or ent:Health() <= 0) and
+               isTypeValid and
+               not NBC.Util.IsBarnacleHeldEntity(ent, barnacles) then
+
                 -- Check if detected entity matches any requested class or the base
                 if NBC.Util.MatchesClassFilter(ent, classes, matchClassExactly, base) then
                     isEntityValid = true
@@ -262,6 +281,14 @@ end
 function NBC.Util.IsRemovable(ent)
     if IsValid(ent) then -- Entity is valid
         if not ent.doNotRemove then -- Not marked as doNotRemove
+            if NBC.Util.ShouldKeepPlayerCorpse(ent) then
+                return false
+            end
+
+            if NBC.Util.ShouldRemovePlayerCorpse(ent) then
+                return true
+            end
+
             if NBC.Util.IsBarnacleHeldEntity(ent) then
                 return false
             end

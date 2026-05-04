@@ -1,4 +1,3 @@
 - Download each supported addon and validate if our base/class removal names are up to date
 - Automatic detection of bases
 - Make it easier to choose ent classes and bases in menus
-- Add option to ignore player corpses
