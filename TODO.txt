@@ -1,3 +1,2 @@
-- Download each supported addon and validate if our base/class removal names are up to date
-- Automatic detection of bases
+- Automatic detection of bases via cached weapons.IsBasedOn/scripted_ents.IsBasedOn checks
 - Make it easier to choose ent classes and bases in menus

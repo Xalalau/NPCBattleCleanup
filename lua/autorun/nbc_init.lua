@@ -167,15 +167,30 @@ if SERVER then
     NBC.weaponsBase = { -- Exact-match Base class names
         -- Addons:
         "tfa_gun_base", -- TFA
+        "tfa_bash_base", -- TFA
+        "tfa_melee_base", -- TFA
+        "tfa_nade_base", -- TFA
+        "tfa_bow_base", -- TFA
+        "tfa_knife_base", -- TFA
+        "tfa_sword_advanced_base", -- TFA
+        "tfa_cssnade_base", -- TFA
+        "tfa_shotty_base", -- TFA
+        "tfa_akimbo_base", -- TFA
+        "tfa_3dbash_base", -- TFA
+        "tfa_3dscoped_base", -- TFA
+        "tfa_scoped_base", -- TFA
         "arccw_base", -- ArcCW
         "arccw_base_melee", -- ArcCW
         "arccw_base_nade", -- ArcCW
+        "arc9_base", -- ARC9
+        "arc9_base_nade", -- ARC9
         "bobs_gun_base", -- M9K
         "bobs_scoped_base", -- M9K
         "bobs_shotty_base", -- M9K
         "bobs_nade_base", -- M9K
         "cw_base", -- CW2
         "cw_grenade_base", -- CW2
+        "dangumeleebase", -- Melee Arts 2
         "weapon_vj_base" -- VJ
     }
 
@@ -184,14 +199,22 @@ if SERVER then
         "item_",
         "npc_grenade_",
         -- Addons:
+        "m9k_ammo_", -- M9K
+        "tfa_ammo_", -- TFA
+        "arccw_ammo", -- ArcCW
+        "arc9_ammo", -- ARC9
         "vj_" -- VJ
     }
 
     NBC.itemsBase = { -- Exact-match Base class names
         -- Addons:
         "arccw_att_base", -- ArcCW
+        "arccw_ammo", -- ArcCW
+        "arc9_att_base", -- ARC9
+        "arc9_ammo", -- ARC9
         "cw_attpack_base", -- CW2
-        "cw_ammo_ent_base" -- CW2
+        "cw_ammo_ent_base", -- CW2
+        "tfa_ammo_base" -- TFA
     }
 
     NBC.leftovers = { -- Exact-match class names
