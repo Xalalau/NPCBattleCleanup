@@ -105,6 +105,10 @@ end)
 
 ## Validation
 
+- Always read logs from NBC.AI.ErrorCapture.Install() to fix your script errors.
+- When testing entities, place them near the player, near the player spawn, or in a suitable position in the world.
+- If players can interfere with the test, make the entities ignore them.
+
 ```sh
 git diff --check
 lua-language-server --check=. --check_format=pretty --checklevel=Warning --logpath=/tmp/nbc-luals-log
