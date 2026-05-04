@@ -33,6 +33,17 @@ local function NBC_Menu(CPanel)
     configurationsSection:SetLabel("Configuration")
     configurationsSection:Dock(TOP)
 
+    panel = vgui.Create("DButton", CPanel)
+    panel:SetText("Entity Lists...")
+    panel:SetTall(24)
+    panel:Dock(TOP)
+    panel:DockMargin(0, 0, 0, 6)
+    panel.DoClick = function()
+        if NBC.OpenEntityListsMenu then
+            NBC.OpenEntityListsMenu()
+        end
+    end
+
     panel = CPanel:AddControl("Slider", {
         Command = "nbc_delay",
         Label = "Cleanup Delay",

@@ -1,2 +1,1 @@
 - Automatic detection of bases via cached weapons.IsBasedOn/scripted_ents.IsBasedOn checks
-- Make it easier to choose ent classes and bases in menus
