@@ -1,7 +1,7 @@
 function NBC.Util.GetFadingConfig()
     local fadingTime = NBC.CVar.nbc_fading_time and NBC.CVar.nbc_fading_time:GetString() or NBC.CVarDefaults.nbc_fading_time
 
-    return NBC.staticDelays.fading[fadingTime] or NBC.staticDelays.fading[NBC.CVarDefaults.nbc_fading_time]
+    return NBC.FadingConfigs[fadingTime] or NBC.FadingConfigs[NBC.CVarDefaults.nbc_fading_time]
 end
 
 -- Adjust currently running timers to match the new configurations
@@ -24,15 +24,7 @@ function NBC.Util.UpdateConfigurations()
         NBC.lastCleanup.scale = NBC.CVar.nbc_delay_scale:GetFloat()
         NBC.lastCleanup.value = NBC.CVar.nbc_delay:GetFloat() * NBC.lastCleanup.scale
 
-        -- Clear the waiting-for-cleanup flag
-        if NBC.lastCleanup.waiting then
-            NBC.lastCleanup.waiting = false
-        end
-
         -- Remove any existing cleanup timers
-        if timer.Exists(NBC.lastCleanup.entCleanupTimer) then
-            timer.Remove(NBC.lastCleanup.entCleanupTimer)
-        end
         if timer.Exists(NBC.lastCleanup.corpsesCleanupTimer) then
             timer.Remove(NBC.lastCleanup.corpsesCleanupTimer)
         end

@@ -11,6 +11,11 @@ function NBC.SetHooks()
         NBC.OnNPCDeathEvent(npc, attacker, npc:GetClass(), npc:GetPos(), NBC.radius.normal) 
     end)
 
+    -- Hook: server-side NPC ragdoll created
+    hook.Add("CreateEntityRagdoll", "NBC_CreateEntityRagdoll", function(owner, ragdoll)
+        NBC.RemoveCorpse(owner, ragdoll)
+    end)
+
     -- Hook: NPC damaged
     hook.Add("ScaleNPCDamage", "NBC_ScaleNPCDamage", function(npc, hitgroup, dmginfo)
         -- HACK: Workaround to detect NPC deaths not reported by "OnNPCKilled"

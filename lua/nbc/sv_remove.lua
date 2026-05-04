@@ -45,40 +45,25 @@ function NBC.RemoveEntities(entList, fixedDelay)
     end)
 end
 
--- Remove NPC corpses
-function NBC.RemoveCorpses(identifier, noDelay)
-    local currentGRagMax =  NBC.CVar.g_ragdoll_maxcount:GetInt()
-    identifier = tostring(identifier)
+-- Remove an NPC corpse created by CreateEntityRagdoll
+function NBC.RemoveCorpse(owner, corpse)
+    if not IsValid(owner) or not owner:IsNPC() then return end
+    if not IsValid(corpse) or not corpse:IsRagdoll() then return end
+    if not NBC.CVar.nbc_npc_corpses:GetBool() then return end
+    if not (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then return end
 
-    -- Backup g_ragdoll_maxcount value
-    if currentGRagMax ~= 0 and NBC.gRagMax ~= currentGRagMax then
-        NBC.gRagMax = currentGRagMax
-    end
-
-    -- Refresh configuration
-    NBC.Util.UpdateConfigurations()
-
-    -- Schedule corpse removal with a new cleanup timer
-    if not NBC.lastCleanup.waiting and currentGRagMax ~= 0 then
-        local name = "AutoRemoveCorpses"..identifier
-        local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
-        NBC.lastCleanup.waiting = true
-
-        -- Store current state
-        NBC.lastCleanup.value = delay
-        NBC.lastCleanup.entCleanupTimer = name
-
-        -- Start timer
-        timer.Create(name, noDelay and 0 or delay, 1, function()
-            RunConsoleCommand("g_ragdoll_maxcount", 0)
-
-            timer.Create("AutoRemoveCorpses2"..identifier, NBC.staticDelays.restoreGRagdollMaxcount, 1, function()
-                RunConsoleCommand("g_ragdoll_maxcount", NBC.gRagMax)
-
-                NBC.lastCleanup.waiting = false
-            end)
+    -- Burning corpses become reliably removable after the fire cleanup finishes.
+    if owner:IsOnFire() or corpse:IsOnFire() then
+        timer.Simple(NBC.staticDelays.waitBurningCorpse, function()
+            if IsValid(corpse) and NBC.CVar.nbc_npc_corpses:GetBool() then
+                NBC.RemoveEntities({ corpse }, 0)
+            end
         end)
+
+        return
     end
+
+    NBC.RemoveEntities({ corpse })
 end
 
 -- Remove decals (blood, explosions, bullet impacts, etc.)
@@ -209,18 +194,5 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking, de
         NBC.RemoveEntities(entList)
     end
 
-    -- Clean up corpses
-    if IsValid(npc) and NBC.CVar.nbc_npc_corpses:GetBool() and
-       (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
-        -- Burning corpses:
-        -- Wait until the fire ends so they restore their normal state and become removable.
-        if npc:IsOnFire() then
-            timer.Simple(NBC.staticDelays.waitBurningCorpse, function()
-                NBC.RemoveCorpses("onk_corpses", true) -- "onk_corpses" is passed because the npc entity is nil at this point
-            end)
-        -- Normal
-        else
-            NBC.RemoveCorpses(npc)
-        end
-    end
+    -- NPC corpses are removed individually from the CreateEntityRagdoll hook.
 end

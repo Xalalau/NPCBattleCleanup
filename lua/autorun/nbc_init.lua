@@ -25,6 +25,21 @@ NBC = {
         nbc_delay_scale = 1
     },
     Net = {},
+    -- The max fading effect delay is unlimited for scripted entities but only 4s for corpses
+    FadingConfigs = {
+        ["Fast"] = {
+            delay = 0.005,
+            gRagdollFadespeed = 3000
+        },
+        ["Normal"] = {
+            delay = 0.6,
+            gRagdollFadespeed = 600
+        },
+        ["Slow"] = {
+            delay = 4,
+            gRagdollFadespeed = 1
+        }
+    },
     dataDir = "nbc",
     luaDir = "nbc"
 }
@@ -46,14 +61,10 @@ if SERVER then
     -- Server-side utilities
     NBC.Util = {}
 
-    NBC.gRagMax = nil -- Last recorded g_ragdoll_maxcount 
-
     NBC.lastCleanup = {
-        waiting = false, -- Whether a cleanup is scheduled
         value = nil, -- Current delay value
         scale = 1, -- Current scale multiplier
-        entCleanupTimer = "none", -- Name of the corpses cleanup timer
-        corpsesCleanupTimer = "none" -- Name of the entities cleanup timer
+        corpsesCleanupTimer = "none" -- Name of the latest entity cleanup timer
     }
 
     NBC.radius = {
@@ -67,23 +78,7 @@ if SERVER then
 
     NBC.staticDelays = {
         removeThrowables = 2,
-        restoreGRagdollMaxcount = 0.4,
-        waitBurningCorpse = 7.5, -- GMod fixed value
-        fading = {
-            -- The max fading effect delay is unlimited for scripted entities but only 4s for corpses
-            ["Fast"] = {
-                delay = 0.005,
-                gRagdollFadespeed = 3000
-            },
-            ["Normal"] = {
-                delay = 0.6,
-                gRagdollFadespeed = 600
-            },
-            ["Slow"] = {
-                delay = 4,
-                gRagdollFadespeed = 1 
-            }
-        }
+        waitBurningCorpse = 7.5 -- GMod fixed value
     }
 
     -- Minimum time the game needs to create new entities after an NPC dies
@@ -272,7 +267,6 @@ hook.Add("InitPostEntity", "NBC_sh_init", function()
 
     if SERVER then
         NBC.CVar.ai_serverragdolls = GetConVar("ai_serverragdolls")
-        NBC.CVar.g_ragdoll_maxcount = GetConVar("g_ragdoll_maxcount")
 
         includeLuaFiles(sharedLuaFiles)
         includeLuaFiles(serverLuaFiles)

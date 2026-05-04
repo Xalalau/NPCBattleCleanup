@@ -22,6 +22,15 @@ if SERVER then
 end
 
 if CLIENT then
+    local clientsideCorpseSerial = 0
+
+    local function getClientsideFadeDelay()
+        local fadingTime = NBC.CVar.nbc_fading_time and NBC.CVar.nbc_fading_time:GetString() or NBC.CVarDefaults.nbc_fading_time
+        local fadingConfig = NBC.FadingConfigs[fadingTime] or NBC.FadingConfigs[NBC.CVarDefaults.nbc_fading_time]
+
+        return fadingConfig.delay
+    end
+
     -- Apply updated ragdoll fade speed
     net.Receive("NBC_UpdateFadingTime", function()
         RunConsoleCommand("g_ragdoll_fadespeed", net.ReadString())
@@ -47,4 +56,33 @@ if CLIENT then
             NBC.Net.SendToServer(command, value)
         end)
     end
+
+    -- Remove clientside NPC corpses individually when server ragdolls are disabled.
+    function NBC.RemoveClientsideCorpse(owner, corpse)
+        if not IsValid(owner) or not owner:IsNPC() then return end
+        if not IsValid(corpse) then return end
+        if not NBC.CVar.nbc_npc_corpses:GetBool() then return end
+
+        clientsideCorpseSerial = clientsideCorpseSerial + 1
+
+        local timerName = "NBC_ClientsideCorpse_" .. tostring(clientsideCorpseSerial)
+        local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
+        local fadeDelay = getClientsideFadeDelay()
+
+        timer.Create(timerName, delay, 1, function()
+            if not IsValid(corpse) or not NBC.CVar.nbc_npc_corpses:GetBool() then return end
+
+            corpse:SetSaveValue("m_bFadingOut", true)
+
+            timer.Create(timerName .. "_Remove", fadeDelay + 0.2, 1, function()
+                if IsValid(corpse) then
+                    corpse:Remove()
+                end
+            end)
+        end)
+    end
+
+    hook.Add("CreateClientsideRagdoll", "NBC_CreateClientsideRagdoll", function(owner, corpse)
+        NBC.RemoveClientsideCorpse(owner, corpse)
+    end)
 end
