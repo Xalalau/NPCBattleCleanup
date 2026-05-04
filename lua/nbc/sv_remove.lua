@@ -1,3 +1,61 @@
+local tryRemoveEntity
+
+local function scheduleEntityRemovalRetry(ent, fixedDelay)
+    if not IsValid(ent) then return end
+
+    local timerName = "NBC_FOVCleanupRetry_" .. tostring(ent)
+
+    if timer.Exists(timerName) then return end
+
+    timer.Create(timerName, NBC.FOVCleanup.retryDelay, 1, function()
+        timer.Remove(timerName)
+
+        if not IsValid(ent) then return end
+
+        tryRemoveEntity(ent, fixedDelay)
+    end)
+end
+
+local function startEntityFade(ent, fixedDelay)
+    local hookName = tostring(ent)
+    local fadingTime = fixedDelay and 0.6 or NBC.Util.GetFadingConfig().delay
+    local maxTime = CurTime() + fadingTime
+
+    ent:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: does not work with custom weapon bases
+
+    hook.Add("Tick", hookName, function()
+        if not IsValid(ent) then
+            hook.Remove("Tick", hookName)
+        elseif not NBC.Util.IsRemovable(ent) then
+            ent:SetColor(Color(255, 255, 255, 255))
+            hook.Remove("Tick", hookName)
+        elseif CurTime() >= maxTime then
+            ent:Remove()
+            hook.Remove("Tick", hookName)
+        else
+            ent:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime()) / fadingTime))
+        end
+    end)
+end
+
+tryRemoveEntity = function(ent, fixedDelay)
+    if not NBC.Util.IsRemovable(ent) then return end
+
+    if not NBC.CVar.nbc_fov_cleanup:GetBool() then
+        startEntityFade(ent, fixedDelay)
+
+        return
+    end
+
+    if NBC.Util.IsVisibleInAnyPlayerFOV(ent) then
+        scheduleEntityRemovalRetry(ent, fixedDelay)
+
+        return
+    end
+
+    ent:Remove()
+end
+
 -- Remove entities in a given list
 -- Note: using fixedDelay forces the fadingTime to "Normal"
 function NBC.RemoveEntities(entList, fixedDelay)
@@ -15,30 +73,10 @@ function NBC.RemoveEntities(entList, fixedDelay)
             NBC.lastCleanup.value = delay
             NBC.lastCleanup.corpsesCleanupTimer = timerName
 
-            -- Remove entities with a fade effect
+            -- Remove the selected entities
             timer.Create(timerName, fixedDelay or delay, 1, function()
                 for k, ent in pairs(entList) do
-                    if NBC.Util.IsRemovable(ent) then
-                        local hookName = tostring(ent)
-                        local fadingTime = fixedDelay and 0.6 or NBC.Util.GetFadingConfig().delay
-                        local maxTime = CurTime() + fadingTime
-
-                        ent:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: does not work with custom weapon bases
-
-                        hook.Add("Tick", hookName, function()
-                            if not IsValid(ent) then
-                                hook.Remove("Tick", hookName)
-                            elseif not NBC.Util.IsRemovable(ent) then
-                                ent:SetColor(Color(255, 255, 255, 255))
-                                hook.Remove("Tick", hookName)
-                            elseif CurTime() >= maxTime then
-                                ent:Remove()
-                                hook.Remove("Tick", hookName)
-                            else
-                                ent:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())/fadingTime))
-                            end
-                        end)
-                    end
+                    tryRemoveEntity(ent, fixedDelay)
                 end
             end)
         end

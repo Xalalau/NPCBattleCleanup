@@ -95,6 +95,12 @@ local function NBC_Menu(CPanel)
 
     CPanel:ControlHelp("Map decal marks: blood, explosions, gunshots, and more.")
 
+    panel = CPanel:AddControl("CheckBox", { Label = "Only Clean Up Out of Sight", Command = "nbc_fov_cleanup" } )
+    panel.OnChange = function(self, bVal) NBC.Net.SendToServer("nbc_fov_cleanup", bVal) end
+    panel:SetValue(NBC.CVar.nbc_fov_cleanup:GetInt())
+
+    CPanel:ControlHelp("Wait until remnants are out of sight or behind a wall before removing them.")
+
     if not game.SinglePlayer() then
         panel = CPanel:AddControl("CheckBox", { Label = "Abandoned NPCs", Command = "nbc_disconnection_cleanup" } )
         panel.OnChange = function(self, bVal) NBC.Net.SendToServer("nbc_disconnection_cleanup", bVal) end

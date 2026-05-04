@@ -1,7 +1,4 @@
-
-
-
-- Field of view clueanup
-- Number of items to keep on the map
-- Make it easier to choose ent classes and bases in menus
+- Add min number of items to keep on the map
+- Download each supported addon and validate if our base/class removal names are up to date
 - Automatic detection of bases
+- Make it easier to choose ent classes and bases in menus

@@ -153,6 +153,53 @@ function NBC.Util.GetStriderVictimRagdolls(strider, deathTime)
     return entList
 end
 
+local function getEntitySightPoint(ent)
+    if not IsValid(ent) then return Vector(0, 0, 0) end
+    if ent.WorldSpaceCenter then return ent:WorldSpaceCenter() end
+
+    return ent:LocalToWorld((ent:OBBMins() + ent:OBBMaxs()) * 0.5)
+end
+
+local function isPointInPlayerFOV(ply, pos)
+    if not IsValid(ply) or not ply:IsPlayer() then return false end
+
+    local toTarget = pos - ply:EyePos()
+    if toTarget:LengthSqr() <= 1 then return true end
+
+    local fov = math.Clamp(NBC.FOVCleanup.safeFOV + NBC.FOVCleanup.padding, 1, 179)
+    local minDot = math.cos(math.rad(fov * 0.5))
+
+    return ply:EyeAngles():Forward():Dot(toTarget:GetNormalized()) >= minDot
+end
+
+local function isBrushLineClear(ply, ent, pos)
+    local trace = util.TraceLine({
+        start = ply:EyePos(),
+        endpos = pos,
+        filter = { ply, ent },
+        mask = rawget(_G, "MASK_SOLID_BRUSHONLY") or rawget(_G, "MASK_VISIBLE")
+    })
+
+    return not trace or not trace.Hit
+end
+
+function NBC.Util.IsVisibleInAnyPlayerFOV(ent)
+    if not IsValid(ent) then return false end
+
+    local sightPoint = getEntitySightPoint(ent)
+
+    for _, ply in ipairs(player.GetHumans()) do
+        if IsValid(ply) and
+           isPointInPlayerFOV(ply, sightPoint) and
+           isBrushLineClear(ply, ent, sightPoint) then
+
+            return true
+        end
+    end
+
+    return false
+end
+
 -- Find entities within a sphere that match the given classes
 -- If classes is nil, skip class matching but still apply the usual cleanup filters
 -- radius = NBC.radius.map forces scanning the whole map

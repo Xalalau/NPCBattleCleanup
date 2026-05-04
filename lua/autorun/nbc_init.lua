@@ -6,6 +6,7 @@ NBC = {
         nbc_disconnection_cleanup = 0,
         nbc_live_ply_dropped_weapons = 1,
         nbc_gmod_keep_corpses = 1,
+        nbc_fov_cleanup = 0,
 
         nbc_npc_corpses = 1,
         nbc_npc_leftovers = 1,
@@ -39,6 +40,11 @@ NBC = {
             delay = 4,
             gRagdollFadespeed = 1
         }
+    },
+    FOVCleanup = {
+        safeFOV = 130,
+        padding = 0,
+        retryDelay = 0.25
     },
     dataDir = "nbc",
     luaDir = "nbc"

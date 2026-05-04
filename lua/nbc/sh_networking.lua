@@ -31,6 +31,41 @@ if CLIENT then
         return fadingConfig.delay
     end
 
+    local function getEntitySightPoint(ent)
+        if ent.WorldSpaceCenter then return ent:WorldSpaceCenter() end
+
+        return ent:LocalToWorld((ent:OBBMins() + ent:OBBMaxs()) * 0.5)
+    end
+
+    local function isPointInLocalPlayerFOV(ply, pos)
+        local toTarget = pos - ply:EyePos()
+        if toTarget:LengthSqr() <= 1 then return true end
+
+        local fov = math.Clamp(NBC.FOVCleanup.safeFOV + NBC.FOVCleanup.padding, 1, 179)
+        local minDot = math.cos(math.rad(fov * 0.5))
+
+        return ply:EyeAngles():Forward():Dot(toTarget:GetNormalized()) >= minDot
+    end
+
+    local function isVisibleInLocalPlayerFOV(ent)
+        if not IsValid(ent) then return false end
+
+        local ply = LocalPlayer()
+        if not IsValid(ply) then return false end
+
+        local sightPoint = getEntitySightPoint(ent)
+        if not isPointInLocalPlayerFOV(ply, sightPoint) then return false end
+
+        local trace = util.TraceLine({
+            start = ply:EyePos(),
+            endpos = sightPoint,
+            filter = { ply, ent },
+            mask = rawget(_G, "MASK_SOLID_BRUSHONLY") or rawget(_G, "MASK_VISIBLE")
+        })
+
+        return not trace or not trace.Hit
+    end
+
     -- Apply updated ragdoll fade speed
     net.Receive("NBC_UpdateFadingTime", function()
         RunConsoleCommand("g_ragdoll_fadespeed", net.ReadString())
@@ -68,9 +103,30 @@ if CLIENT then
         local timerName = "NBC_ClientsideCorpse_" .. tostring(clientsideCorpseSerial)
         local delay = NBC.CVar.nbc_delay:GetFloat() * NBC.CVar.nbc_delay_scale:GetFloat()
         local fadeDelay = getClientsideFadeDelay()
+        local retryTimerName = timerName .. "_FOVRetry"
+        local removeWhenOutOfView
+
+        removeWhenOutOfView = function()
+            if not IsValid(corpse) or not NBC.CVar.nbc_npc_corpses:GetBool() then return end
+
+            if isVisibleInLocalPlayerFOV(corpse) then
+                timer.Remove(retryTimerName)
+                timer.Create(retryTimerName, NBC.FOVCleanup.retryDelay, 1, removeWhenOutOfView)
+
+                return
+            end
+
+            corpse:Remove()
+        end
 
         timer.Create(timerName, delay, 1, function()
             if not IsValid(corpse) or not NBC.CVar.nbc_npc_corpses:GetBool() then return end
+
+            if NBC.CVar.nbc_fov_cleanup:GetBool() then
+                removeWhenOutOfView()
+
+                return
+            end
 
             corpse:SetSaveValue("m_bFadingOut", true)
 
