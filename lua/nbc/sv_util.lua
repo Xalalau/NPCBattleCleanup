@@ -31,17 +31,122 @@ function NBC.Util.UpdateConfigurations()
     end
 end
 
+local function newBaseMatchCache()
+    return {
+        weaponBases = {},
+        npcBases = {}
+    }
+end
+
+local function ensureBaseMatchCache()
+    if not NBC.BaseMatchCache or not NBC.BaseMatchCache.weaponBases then
+        NBC.BaseMatchCache = newBaseMatchCache()
+    end
+
+    return NBC.BaseMatchCache
+end
+
+local function safeIsBasedOn(library, class, baseName)
+    if not library or not library.IsBasedOn then return false end
+
+    local ok, result = pcall(library.IsBasedOn, class, baseName)
+
+    return ok and result == true
+end
+
+local function safeGetScriptedEntType(class)
+    if not scripted_ents or not scripted_ents.GetType then return nil end
+
+    local ok, result = pcall(scripted_ents.GetType, class)
+
+    return ok and result or nil
+end
+
+local function isNPCBaseMatchCandidate(ent)
+    return ent.IsNPC and ent:IsNPC() or ent.IsNextBot and ent:IsNextBot()
+end
+
+local function isWeaponBaseClass(class)
+    local cache = ensureBaseMatchCache().weaponBases
+    local cached = cache[class]
+    if cached ~= nil then return cached end
+
+    local matches = class == "weapon_base" or safeIsBasedOn(weapons, class, "weapon_base")
+    cache[class] = matches
+
+    return matches
+end
+
+local function isNPCBaseClass(class)
+    local cache = ensureBaseMatchCache().npcBases
+    local cached = cache[class]
+    if cached ~= nil then return cached end
+
+    local entType = safeGetScriptedEntType(class)
+    local matches = entType == "ai" or
+                    entType == "nextbot" or
+                    class == "base_ai" or
+                    class == "base_nextbot" or
+                    safeIsBasedOn(scripted_ents, class, "base_ai") or
+                    safeIsBasedOn(scripted_ents, class, "base_nextbot")
+
+    cache[class] = matches
+
+    return matches
+end
+
+local function isAutomaticBaseMatch(ent, entityBase)
+    if ent.IsWeapon and ent:IsWeapon() then
+        return isWeaponBaseClass(entityBase)
+    end
+
+    if isNPCBaseMatchCandidate(ent) then
+        return isNPCBaseClass(entityBase)
+    end
+
+    return false
+end
+
+local function shouldDetectAutomaticBases()
+    return NBC.CVar.nbc_auto_base_detection and NBC.CVar.nbc_auto_base_detection:GetBool()
+end
+
+local function shouldUseAutomaticBaseForFilter(classes, ent)
+    if not shouldDetectAutomaticBases() then return false end
+
+    if classes == NBC.weapons then
+        return ent.IsWeapon and ent:IsWeapon()
+    end
+
+    if classes == NBC.leftovers then
+        return isNPCBaseMatchCandidate(ent)
+    end
+
+    return false
+end
+
+function NBC.Util.ClearBaseMatchCache()
+    NBC.BaseMatchCache = newBaseMatchCache()
+end
+
 -- Detect whether an entity uses one of the specified base classes
 function NBC.Util.IsValidBase(base, ent)
-    if ent.Base then
-        for k, name in pairs(base) do
-            if ent.Base == name then
-                return true
-            end
+    if not base or not IsValid(ent) then return false end
+    if not ent.Base then return false end
+
+    for _, name in ipairs(base) do
+        if ent.Base == name then
+            return true
         end
     end
 
     return false
+end
+
+function NBC.Util.IsAutomaticBase(ent)
+    if not IsValid(ent) or not ent.Base then return false end
+
+    return isAutomaticBaseMatch(ent, ent.Base)
 end
 
 function NBC.Util.IsDebrisFilter(classes)
@@ -51,16 +156,19 @@ end
 function NBC.Util.MatchesClassFilter(ent, classes, matchClassExactly, base)
     if not classes then return true end
 
+    local entClass = ent:GetClass()
+
     for _, class in pairs(classes) do
-        if matchClassExactly and ent:GetClass() == class or
-           not matchClassExactly and string.find(ent:GetClass(), class, 1, true) or
-           base and NBC.Util.IsValidBase(base, ent) then
+        if matchClassExactly and entClass == class or
+           not matchClassExactly and string.find(entClass, class, 1, true) then
 
             return true
         end
     end
 
-    return false
+    if base and NBC.Util.IsValidBase(base, ent) then return true end
+
+    return shouldUseAutomaticBaseForFilter(classes, ent) and NBC.Util.IsAutomaticBase(ent) or false
 end
 
 function NBC.Util.IsBarnacleCleanupCandidate(ent)

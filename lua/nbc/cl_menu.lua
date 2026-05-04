@@ -136,6 +136,12 @@ local function NBC_Menu(CPanel)
 
     CPanel:ControlHelp("Wait until remnants are out of sight or behind a wall before removing them.")
 
+    panel = CPanel:AddControl("CheckBox", { Label = "Auto Base Detection", Command = "nbc_auto_base_detection" } )
+    panel.OnChange = function(self, bVal) NBC.Net.SendToServer("nbc_auto_base_detection", bVal) end
+    panel:SetValue(NBC.CVar.nbc_auto_base_detection:GetInt())
+
+    CPanel:ControlHelp("Detect unsupported NPC and weapon bases through registered GLua inheritance.")
+
     if not game.SinglePlayer() then
         panel = CPanel:AddControl("CheckBox", { Label = "Abandoned NPCs", Command = "nbc_disconnection_cleanup" } )
         panel.OnChange = function(self, bVal) NBC.Net.SendToServer("nbc_disconnection_cleanup", bVal) end

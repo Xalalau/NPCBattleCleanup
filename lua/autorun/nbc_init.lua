@@ -7,6 +7,7 @@ NBC = {
         nbc_live_ply_dropped_weapons = 1,
         nbc_gmod_keep_corpses = 1,
         nbc_fov_cleanup = 0,
+        nbc_auto_base_detection = 1,
 
         nbc_npc_corpses = 1,
         nbc_npc_leftovers = 1,
@@ -100,6 +101,7 @@ end
 if SERVER then
     -- Server-side utilities
     NBC.Util = {}
+    NBC.BaseMatchCache = {}
     NBC.KeepEnts = {}
 
     for _, config in ipairs(NBC.KeepEntTypes) do
@@ -324,6 +326,13 @@ local clientLuaFiles = {
     NBC.luaDir .. "/cl_*.lua"
 }
 
+local function includeSharedLuaFiles()
+    if NBC.SharedLuaFilesIncluded then return end
+
+    NBC.SharedLuaFilesIncluded = true
+    includeLuaFiles(sharedLuaFiles)
+end
+
 if SERVER then
     addLuaFiles(sharedLuaFiles)
     addLuaFiles(clientLuaFiles)
@@ -336,18 +345,23 @@ hook.Add("InitPostEntity", "NBC_sh_init", function()
     if SERVER then
         NBC.CVar.ai_serverragdolls = GetConVar("ai_serverragdolls")
 
-        includeLuaFiles(sharedLuaFiles)
+        includeSharedLuaFiles()
         includeLuaFiles(serverLuaFiles)
+
+        if NBC.Util.ClearBaseMatchCache then
+            NBC.Util.ClearBaseMatchCache()
+        end
 
         NBC.RemoveDecals()
         NBC.SetHooks()
     end
 
     if CLIENT then
-        includeLuaFiles(sharedLuaFiles)
+        includeSharedLuaFiles()
     end
 end)
 
 if CLIENT then
+    includeSharedLuaFiles()
     includeLuaFiles(clientLuaFiles)
 end
