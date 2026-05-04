@@ -85,6 +85,30 @@ local function NBC_Menu(CPanel)
     end
 
     CPanel:Help("")
+    local minimumToKeepSection = vgui.Create("DCollapsibleCategory", CPanel)
+    minimumToKeepSection:SetLabel("Minimum to Keep")
+    minimumToKeepSection:Dock(TOP)
+
+    for _, config in ipairs(NBC.KeepEntTypes) do
+        panel = CPanel:AddControl("Slider", {
+            Command = config.cvar,
+            Label = config.label,
+            Type = "Integer",
+            Min = "0",
+            Max = "25"
+        })
+        panel.OnValueChanged = function(self, val)
+            NBC.Net.SendSliderToServer(config.cvar, math.floor(tonumber(val) or 0))
+        end
+        if panel.SetDecimals then
+            panel:SetDecimals(0)
+        end
+        panel:SetValue(NBC.CVar[config.cvar]:GetInt())
+    end
+
+    CPanel:ControlHelp("0 removes every eligible remnant. Higher values keep the newest entities of each type.")
+
+    CPanel:Help("")
     local generalSection = vgui.Create("DCollapsibleCategory", CPanel)
     generalSection:SetLabel("General")
     generalSection:Dock(TOP)

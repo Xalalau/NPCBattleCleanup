@@ -36,12 +36,12 @@ function NBC.SetHooks()
     hook.Add("PlayerDeath", "NBC_OnPlayerKilled", function(ply, inflictor, attacker)
         -- Remove the player's items
         if NBC.CVar.nbc_ply_items:GetBool() then
-            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.items, false))
+            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.items, false), nil, "items")
         end
 
         -- Remove the player's weapons
         if NBC.CVar.nbc_ply_weapons:GetBool() then 
-            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.weapons, false))
+            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.weapons, false), nil, "weapons")
         end
     end)
 
@@ -80,7 +80,7 @@ function NBC.SetHooks()
     hook.Add("PlayerDroppedWeapon", "NBC_PlayerDroppedWeapon", function(ply, wep)
         -- Remove dropped weapons from live players
         if NBC.CVar.nbc_live_ply_dropped_weapons:GetBool() and IsValid(ply) then
-            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.weapons, false))
+            NBC.RemoveEntities(NBC.Util.GetFilteredEnts(ply:GetPos(), NBC.radius.normal, NBC.weapons, false), nil, "weapons")
         end
     end)
 
@@ -105,7 +105,7 @@ function NBC.SetHooks()
 
         -- Remove player-spawned items if enabled
         if NBC.CVar.nbc_ply_placed_items:GetBool() then
-            NBC.RemoveEntities(entList)
+            NBC.RemoveEntities(entList, nil, "items")
         end
     end)
 
@@ -124,7 +124,7 @@ function NBC.SetHooks()
 
         -- Remove player-spawned weapons if enabled
         if NBC.CVar.nbc_ply_placed_weapons:GetBool() then 
-            NBC.RemoveEntities(entList)
+            NBC.RemoveEntities(entList, nil, "weapons")
         end
     end)
 end

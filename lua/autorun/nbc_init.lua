@@ -14,6 +14,12 @@ NBC = {
         nbc_npc_items = 1,
         nbc_npc_debris = 1,
 
+        nbc_corpses_min_keep = 0,
+        nbc_leftovers_min_keep = 0,
+        nbc_weapons_min_keep = 0,
+        nbc_items_min_keep = 0,
+        nbc_debris_min_keep = 0,
+
         nbc_ply_weapons = 1,
         nbc_ply_items = 1,
 
@@ -24,6 +30,33 @@ NBC = {
 
         nbc_delay = 2,
         nbc_delay_scale = 1
+    },
+    KeepEntTypes = {
+        {
+            key = "corpses",
+            cvar = "nbc_corpses_min_keep",
+            label = "Corpses"
+        },
+        {
+            key = "leftovers",
+            cvar = "nbc_leftovers_min_keep",
+            label = "Leftovers"
+        },
+        {
+            key = "weapons",
+            cvar = "nbc_weapons_min_keep",
+            label = "Weapons"
+        },
+        {
+            key = "items",
+            cvar = "nbc_items_min_keep",
+            label = "Items"
+        },
+        {
+            key = "debris",
+            cvar = "nbc_debris_min_keep",
+            label = "Debris"
+        }
     },
     Net = {},
     -- The max fading effect delay is unlimited for scripted entities but only 4s for corpses
@@ -66,6 +99,11 @@ end
 if SERVER then
     -- Server-side utilities
     NBC.Util = {}
+    NBC.KeepEnts = {}
+
+    for _, config in ipairs(NBC.KeepEntTypes) do
+        NBC.KeepEnts[config.key] = {}
+    end
 
     NBC.lastCleanup = {
         value = nil, -- Current delay value
