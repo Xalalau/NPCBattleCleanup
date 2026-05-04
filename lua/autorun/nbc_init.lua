@@ -200,9 +200,56 @@ end
 
 -- Init
 
+local function forEachLuaFile(pattern, callback)
+    if not string.find(pattern, "*", 1, true) then
+        if file.Exists(pattern, "LUA") then
+            callback(pattern)
+        end
+
+        return
+    end
+
+    local dir = string.match(pattern, "^(.*)/[^/]*$")
+    local files = file.Find(pattern, "LUA") or {}
+
+    table.sort(files)
+
+    for _, name in ipairs(files) do
+        callback(dir and dir .. "/" .. name or name)
+    end
+end
+
+local function addLuaFiles(patterns)
+    if not SERVER then return end
+
+    for _, pattern in ipairs(patterns) do
+        forEachLuaFile(pattern, AddCSLuaFile)
+    end
+end
+
+local function includeLuaFiles(patterns)
+    for _, pattern in ipairs(patterns) do
+        forEachLuaFile(pattern, include)
+    end
+end
+
+local sharedLuaFiles = {
+    NBC.luaDir .. "/sh_networking.lua",
+    "ai/*.lua",
+    NBC.luaDir .. "/sh_ai_*.lua"
+}
+
+local serverLuaFiles = {
+    NBC.luaDir .. "/sv_*.lua"
+}
+
+local clientLuaFiles = {
+    NBC.luaDir .. "/cl_*.lua"
+}
+
 if SERVER then
-    AddCSLuaFile(NBC.luaDir .. "/sh_networking.lua")
-    AddCSLuaFile(NBC.luaDir .. "/cl_menu.lua")
+    addLuaFiles(sharedLuaFiles)
+    addLuaFiles(clientLuaFiles)
 end
 
 hook.Add("InitPostEntity", "NBC_sh_init", function()
@@ -213,20 +260,18 @@ hook.Add("InitPostEntity", "NBC_sh_init", function()
         NBC.CVar.ai_serverragdolls = GetConVar("ai_serverragdolls")
         NBC.CVar.g_ragdoll_maxcount = GetConVar("g_ragdoll_maxcount")
 
-        include(NBC.luaDir .. "/sh_networking.lua")
-        include(NBC.luaDir .. "/sv_hooks.lua")
-        include(NBC.luaDir .. "/sv_remove.lua")
-        include(NBC.luaDir .. "/sv_util.lua")
+        includeLuaFiles(sharedLuaFiles)
+        includeLuaFiles(serverLuaFiles)
 
         NBC.RemoveDecals()
         NBC.SetHooks()
     end
 
     if CLIENT then
-        include(NBC.luaDir .. "/sh_networking.lua")
+        includeLuaFiles(sharedLuaFiles)
     end
 end)
 
 if CLIENT then
-    include(NBC.luaDir .. "/cl_menu.lua")
+    includeLuaFiles(clientLuaFiles)
 end
