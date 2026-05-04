@@ -26,11 +26,13 @@ function NBC.RemoveEntities(entList, fixedDelay)
                         ent:SetRenderMode(RENDERMODE_TRANSCOLOR) -- TODO: does not work with custom weapon bases
 
                         hook.Add("Tick", hookName, function()
-                            if CurTime() >= maxTime or not IsValid(ent) then
-                                if IsValid(ent) then
-                                    ent:Remove()
-                                end
-
+                            if not IsValid(ent) then
+                                hook.Remove("Tick", hookName)
+                            elseif not NBC.Util.IsRemovable(ent) then
+                                ent:SetColor(Color(255, 255, 255, 255))
+                                hook.Remove("Tick", hookName)
+                            elseif CurTime() >= maxTime then
+                                ent:Remove()
                                 hook.Remove("Tick", hookName)
                             else
                                 ent:SetColor(Color(255, 255, 255, 255 * (maxTime - CurTime())/fadingTime))
@@ -162,25 +164,6 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
             npc:SetHealth(0)
         end
 
-        -- Barnacle-related checks
-        timer.Simple(NBC.staticDelays.waitForFilteredResults, function()
-            for k, ent in pairs(entList) do
-                if IsValid(ent) and ent:GetClass() == "npc_barnacle_tongue_tip" then
-                    for k2, ent2 in pairs(ents.GetAll()) do
-                        if ent2:EntIndex() == ent:EntIndex() - 1 then
-                            -- Avoid deleting an NPC currently being eaten by a barnacle
-                            if ent2:GetClass() == "npc_barnacle_tongue_tip" then
-                                NBC.Util.SetDoNotRemove(entList[k], true)
-                            -- Avoid deleting the tongue of a living barnacle
-                            elseif ent2:GetClass() == "npc_barnacle" and ent2:Health() > 0 then
-                                NBC.Util.SetDoNotRemove(entList[k], true)
-                            end
-                        end
-                    end
-                end
-            end
-        end)
-
         -- If killed by a barnacle, allow the NPC to be eaten (otherwise we can have a crash)
         if IsValid(attacker) and attacker:GetClass() == "npc_barnacle" then
             NBC.Util.SetDoNotRemove(npc, true)
@@ -213,7 +196,9 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
         -- For npc_helicopter: delay and remove gib debris
         if class == "npc_helicopter" then
             timer.Simple(6.5, function()
-                NBC.RemoveEntities(NBC.Util.GetFilteredEnts(Vector(0,0,0), radius, { "gib" }, false, true))
+                local entList = NBC.Util.GetFilteredEnts(Vector(0,0,0), radius, { NBC.debris[1] }, false, true, { useDebrisRules = true })
+
+                NBC.RemoveEntities(entList)
             end)
         end
 

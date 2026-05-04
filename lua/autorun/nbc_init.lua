@@ -181,6 +181,18 @@ if SERVER then
         "helicopter_chunk"
     }
 
+    NBC.barnacleCleanupCandidates = {
+        debris = { -- Match substrings from NBC.debris
+            "gib",
+            "prop_physics"
+        },
+        leftovers = { -- Exact-match class names from NBC.leftovers
+            "prop_ragdoll",
+            "prop_ragdoll_attached",
+            "npc_barnacle_tongue_tip"
+        }
+    }
+
     NBC.Throwables = { -- Match substrings in class names
         "meleeartsthrowable" -- Melee Arts 2
     }

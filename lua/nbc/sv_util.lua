@@ -52,17 +52,94 @@ function NBC.Util.IsValidBase(base, ent)
     return false
 end
 
+function NBC.Util.IsDebrisFilter(classes)
+    return classes == NBC.debris
+end
+
+function NBC.Util.MatchesClassFilter(ent, classes, matchClassExactly, base)
+    if not classes then return true end
+
+    for _, class in pairs(classes) do
+        if matchClassExactly and ent:GetClass() == class or
+           not matchClassExactly and string.find(ent:GetClass(), class, 1, true) or
+           base and NBC.Util.IsValidBase(base, ent) then
+
+            return true
+        end
+    end
+
+    return false
+end
+
+function NBC.Util.IsBarnacleCleanupCandidate(ent)
+    if not IsValid(ent) then return false end
+
+    local candidates = NBC.barnacleCleanupCandidates
+    if not candidates then return false end
+
+    return NBC.Util.MatchesClassFilter(ent, candidates.debris, false) or
+           NBC.Util.MatchesClassFilter(ent, candidates.leftovers, true)
+end
+
+function NBC.Util.IsLivingBarnacle(ent)
+    if not IsValid(ent) or ent:GetClass() ~= "npc_barnacle" then return false end
+
+    if ent:Health() > 0 then return true end
+
+    return ent.GetNPCState and ent:GetNPCState() ~= 7
+end
+
+function NBC.Util.GetInternalEntity(ent, key)
+    if not IsValid(ent) or not ent.GetInternalVariable then return nil end
+
+    local value = ent:GetInternalVariable(key)
+
+    return IsValid(value) and value or nil
+end
+
+function NBC.Util.IsBarnacleHeldEntity(ent, barnacles)
+    if not NBC.Util.IsBarnacleCleanupCandidate(ent) then return false end
+
+    local barnacleLiftFlag = rawget(_G, "EFL_IS_BEING_LIFTED_BY_BARNACLE") or 1048576
+    if ent.IsEFlagSet and ent:IsEFlagSet(barnacleLiftFlag) then return true end
+
+    local owner = ent:GetOwner()
+    if NBC.Util.IsLivingBarnacle(owner) then return true end
+
+    local parent = ent:GetParent()
+    if NBC.Util.IsLivingBarnacle(parent) then return true end
+
+    barnacles = barnacles or ents.FindByClass("npc_barnacle")
+
+    if not barnacles then return false end
+
+    for _, barnacle in ipairs(barnacles) do
+        if NBC.Util.IsLivingBarnacle(barnacle) then
+            if barnacle.GetEnemy and barnacle:GetEnemy() == ent then return true end
+            if NBC.Util.GetInternalEntity(barnacle, "m_hRagdoll") == ent then return true end
+            if NBC.Util.GetInternalEntity(barnacle, "m_hTongueTip") == ent then return true end
+            if NBC.Util.GetInternalEntity(barnacle, "m_hTongueRoot") == ent then return true end
+        end
+    end
+
+    return false
+end
+
 -- Find entities within a sphere that match the given classes
 -- If classes is nil, skip class matching but still apply the usual cleanup filters
 -- radius = NBC.radius.map forces scanning the whole map
-function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly, scanEverything)
+function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly, scanEverything, options)
+    options = options or {}
+
     local entList = {}
     local base = classes == NBC.items and NBC.itemsBase or 
                  classes == NBC.weapons and NBC.weaponsBase or
                  classes == NBC.leftovers and NBC.leftoversBase
+    local usesDebrisRules = NBC.Util.IsDebrisFilter(classes) or options.useDebrisRules
 
     timer.Simple(NBC.staticDelays.waitToStartFiltering, function()
         local foundEntities = inRadius == NBC.radius.map and ents.GetAll() or ents.FindInSphere(position, inRadius)
+        local barnacles = (classes == NBC.leftovers or usesDebrisRules) and ents.FindByClass("npc_barnacle") or nil
 
         for k, ent in pairs(foundEntities) do
             local isEntityValid = false
@@ -73,19 +150,10 @@ function NBC.Util.GetFilteredEnts(position, inRadius, classes, matchClassExactly
                                            not ent:IsVehicle() and not ent:IsWidget()
 
             -- Check if entity is a valid corpse/debris/leftover or weapon/item
-            if ent:Health() <= 0 and isTypeValid then
+            if (usesDebrisRules or ent:Health() <= 0) and isTypeValid and not NBC.Util.IsBarnacleHeldEntity(ent, barnacles) then
                 -- Check if detected entity matches any requested class or the base
-                if not classes then
+                if NBC.Util.MatchesClassFilter(ent, classes, matchClassExactly, base) then
                     isEntityValid = true
-                else
-                    for _, class in pairs(classes) do
-                        if matchClassExactly and ent:GetClass() == class or
-                           not matchClassExactly and string.find(ent:GetClass(), class, 1, true) or
-                           base and NBC.Util.IsValidBase(base, ent) then
-
-                            isEntityValid = true
-                        end
-                    end
                 end
             end
 
@@ -119,6 +187,10 @@ end
 function NBC.Util.IsRemovable(ent)
     if IsValid(ent) then -- Entity is valid
         if not ent.doNotRemove then -- Not marked as doNotRemove
+            if NBC.Util.IsBarnacleHeldEntity(ent) then
+                return false
+            end
+
             if IsValid(ent:GetCreator()) and ent:GetCreator():IsValid() then -- Created by a player
                 if ent.isThrowable or -- Thrown entities
                    ent:IsWeapon() and NBC.CVar.nbc_ply_placed_weapons:GetBool() or -- A weapon with NBC_PlyPlacedWeapons enabled
