@@ -92,6 +92,8 @@ if SERVER then
     NBC.staticDelays.waitToStartFiltering = NBC.staticDelays.waitForGameNewEntities + 0.01
     -- Minimum time before using filtered results to avoid incomplete tables
     NBC.staticDelays.waitForFilteredResults = NBC.staticDelays.waitToStartFiltering + 0.03
+    -- Small grace period for ragdolls created during special NPC death transitions
+    NBC.staticDelays.striderRagdollCreationSlack = 0.1
 
     -- Workaround to detect NPC deaths that aren't reported to the "OnNPCKilled" hook
     NBC.deathsDetectedByDamage = { -- Exact-match NPC class names

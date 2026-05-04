@@ -1,4 +1,3 @@
-- Rebels killed by striders are turned into ragdolls and don't get deleted
 - Some combine helicoper pieces are created burning and don't get removed
 
 

@@ -58,14 +58,16 @@ function NBC.SetHooks()
     -- Hook: Entity Created
     --   Note: many entities from dead NPCs/players don't appear here
     hook.Add("OnEntityCreated", "NBC_OnEntityCreated", function(ent)
-        if IsValid(ent) then
+        timer.Simple(0.01, function()
+            if not IsValid(ent) then return end
+
             NBC.RemoveThrowable(ent)
 
             -- Barnacles create prop_ragdoll_attached
             if ent:GetClass() == "prop_ragdoll_attached" then
                 NBC.OnNPCDeathEvent(ent, nil, ent:GetClass(), ent:GetPos(), NBC.radius.map)
             end
-        end
+        end)
     end)
 
     -- Hook: Player dropped weapon using Lua

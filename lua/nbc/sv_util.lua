@@ -125,6 +125,42 @@ function NBC.Util.IsBarnacleHeldEntity(ent, barnacles)
     return false
 end
 
+function NBC.Util.IsStriderVictimRagdoll(ent, strider, deathTime)
+    if not IsValid(ent) or not IsValid(strider) then return false end
+    if strider:GetClass() ~= "npc_strider" then return false end
+    if ent:GetOwner() ~= strider then return false end
+    if ent:GetCreationTime() < deathTime - NBC.staticDelays.striderRagdollCreationSlack then return false end
+
+    return ent:GetClass() == "prop_ragdoll" or ent:GetClass() == "prop_ragdoll_attached"
+end
+
+function NBC.Util.GetStriderVictimRagdolls(strider, deathTime)
+    local entList = {}
+    deathTime = deathTime or CurTime()
+
+    if not IsValid(strider) or strider:GetClass() ~= "npc_strider" then
+        return entList
+    end
+
+    timer.Simple(NBC.staticDelays.waitToStartFiltering, function()
+        if not IsValid(strider) then return end
+
+        local barnacles = ents.FindByClass("npc_barnacle")
+
+        for _, ent in ipairs(ents.GetAll()) do
+            if NBC.Util.IsStriderVictimRagdoll(ent, strider, deathTime) and
+               ent:Health() <= 0 and
+               not NBC.Util.IsBarnacleHeldEntity(ent, barnacles) then
+
+                ent:SetOwner()
+                table.insert(entList, ent)
+            end
+        end
+    end)
+
+    return entList
+end
+
 -- Find entities within a sphere that match the given classes
 -- If classes is nil, skip class matching but still apply the usual cleanup filters
 -- radius = NBC.radius.map forces scanning the whole map

@@ -115,11 +115,13 @@ end
 
 -- Handle NPC deaths
 -- Note: adding .doNotRemove to an entity prevents the addon from deleting it
-function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
+function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking, deathTime)
+    deathTime = deathTime or CurTime()
+
     -- Attempt to remove entities created late (due to long death animations/transitions)
     if not isRechecking then
         timer.Simple(3, function()
-            NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, true)
+            NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, true, deathTime)
         end)
     end
 
@@ -149,6 +151,7 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
        (NBC.CVar.nbc_gmod_keep_corpses:GetBool() or not NBC.CVar.ai_serverragdolls:GetBool()) then
     
         local entList = NBC.Util.GetFilteredEnts(pos, radius, NBC.leftovers, true)
+        local striderRagdolls = NBC.Util.GetStriderVictimRagdolls(attacker, deathTime)
 
         -- Handle "prop_ragdoll_attached"
         timer.Simple(NBC.staticDelays.waitForGameNewEntities, function()
@@ -175,6 +178,7 @@ function NBC.OnNPCDeathEvent(npc, attacker, class, pos, radius, isRechecking)
         local extraDelay = class == "npc_combinegunship" and 2 or false
         
         NBC.RemoveEntities(entList, extraDelay)
+        NBC.RemoveEntities(striderRagdolls)
     end
 
     -- Clean up NPC debris
