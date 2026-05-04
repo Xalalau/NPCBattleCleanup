@@ -103,10 +103,18 @@ timer.Simple(0.1, function()
 end)
 ```
 
+## How to start
+
+1) Evaluate old `data/nbc_tests` artifacts.
+2) Ensure the game is running.
+3) Set up your lua error monitoring and keep an eye on it.
+4) Evaluate the need of in-game tests to cofirm states and validate changes. Consider using AI/Test Helpers.
+5) Start.
+
 ## Validation
 
 - Always read logs from NBC.AI.ErrorCapture.Install() to fix your script errors.
-- When testing entities, place them near the player, near the player spawn, or in a suitable position in the world.
+- When testing entities, place them near the player (near = around 160 units), near the player spawn, or in a suitable position in the world.
 - If players can interfere with the test, make the entities ignore them.
 
 ```sh
