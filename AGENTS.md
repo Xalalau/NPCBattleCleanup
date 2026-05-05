@@ -53,10 +53,6 @@ NBC.AI.ErrorCapture.Flush(true)
 -- Removes the error capture hook and flush timer. Input: none. Returns: nil.
 NBC.AI.ErrorCapture.Cleanup()
 -- Starts synthetic error capture validation in the current realm. Input: none. Returns: nil.
-NBC.AI.ErrorCaptureTests.Run()
--- Removes synthetic validation hooks/timers. Input: none. Returns: nil.
-NBC.AI.ErrorCaptureTests.Cleanup()
--- Opens Utilities > Admin > NBCOptions on the client. Input: optional timing/cursor options. Returns: true when queued, false on wrong realm.
 NBC.AI.Menu.OpenNBCOptions()
 -- Opens/captures the NBC options panel to PNG plus JSON metadata. Input: optional capture/open options. Returns: true when queued, false on wrong realm.
 NBC.AI.Menu.CaptureNBCOptions()
